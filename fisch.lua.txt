@@ -1,0 +1,771 @@
+--========================================================--
+-- RUISHI PREMIUM || FISCH V0.1 (EXACT EVADE UI CLONE)
+-- LocalScript - PC + MOBILE FRIENDLY
+--========================================================--
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Cleanup duplicate GUIs
+if playerGui:FindFirstChild("RuishiFischGui") then
+	playerGui.RuishiFischGui:Destroy()
+end
+if playerGui:FindFirstChild("RuishiIntroGui") then
+	playerGui.RuishiIntroGui:Destroy()
+end
+
+--========================================================--
+-- LOCATIONS DATA (75+ FISCH LOCATIONS)
+--========================================================--
+local Locations = {
+	["Ancient Isle"]            = Vector3.new(6027, 198, 315),
+	["Atlantis"]                = Vector3.new(-4454, -605, 1829),
+	["Birch Cay"]               = Vector3.new(1680, 135, -2410),
+	["Castaway Cliff"]          = Vector3.new(392, 200, -1772),
+	["Cryogenic Canal"]         = Vector3.new(20280, 705, 5730),
+	["Desolate Deep"]           = Vector3.new(-1630, -215, -2815),
+	["Ethereal Abyss"]          = Vector3.new(-3991, -564, 1808),
+	["Forsaken Shores"]         = Vector3.new(-2485, 133, 1537),
+	["Frenzy of War"]           = Vector3.new(-8792, -2761, 826),
+	["Glacial Grotto"]          = Vector3.new(19870, 1155, 5490),
+	["Grand Riff"]              = Vector3.new(-3558, 151, 485),
+	["Keepers Sanctuary"]       = Vector3.new(-3150, 850, -2200),
+	["Lost Jungle"]             = Vector3.new(-2658, 148, -2039),
+	["Moosewood"]               = Vector3.new(472, 150, 239),
+	["Northern Expedition"]     = Vector3.new(19645, 130, 5225),
+	["Poseidon Temple"]         = Vector3.new(-4037, -558, 912),
+	["Roslit Bay"]              = Vector3.new(-1468, 132, 691),
+	["Scoria Reach"]            = Vector3.new(-5186, 143, -1488),
+	["Snowcap Island"]          = Vector3.new(2645, 155, 2375),
+	["Sunken Depths"]           = Vector3.new(-4936, -595, 1819),
+	["Sunken Trial"]            = Vector3.new(-4782, -595, 1827),
+	["Sunstone Island"]         = Vector3.new(-973, 222, -1002),
+	["Terrapin Island"]         = Vector3.new(-225, 141, 1930),
+	["Tidefall"]                = Vector3.new(3182, -1099, 739),
+	["Volcanic Vents"]          = Vector3.new(-3489, -2258, 3809),
+	["Zeus Sanctuary"]          = Vector3.new(-4296, -627, 2663),
+	["Ancient Merchant"]        = Vector3.new(6050, 195, 280),
+	["Angler NPC (Moosewood)"]  = Vector3.new(480, 152, 300),
+	["Appraiser (Moosewood)"]   = Vector3.new(450, 150, 250),
+	["Bait Merchant (Roslit)"]  = Vector3.new(-1480, 135, 710),
+	["Castaway Innkeeper"]      = Vector3.new(410, 202, -1780),
+	["Desolate Merchant"]       = Vector3.new(-1650, -210, -2820),
+	["Forsaken Innkeeper"]      = Vector3.new(-2460, 135, 1560),
+	["Islander Merchant"]       = Vector3.new(-950, 225, -970),
+	["Lighthouse Keeper"]       = Vector3.new(510, 160, 180),
+	["Moosewood Innkeeper"]     = Vector3.new(490, 150, 220),
+	["Roslit Innkeeper"]        = Vector3.new(-1440, 132, 680),
+	["Shipwright (Moosewood)"]  = Vector3.new(530, 148, 260),
+	["Snowcap Merchant"]        = Vector3.new(2620, 158, 2380),
+	["Sunstone Merchant"]       = Vector3.new(-990, 220, -960),
+	["Terrapin Innkeeper"]      = Vector3.new(-200, 142, 1960),
+	["Brine Pool"]              = Vector3.new(-1800, -220, -2900),
+	["Lava Pool (Volcanic)"]    = Vector3.new(-3520, -2240, 3850),
+	["Moosewood Pond"]          = Vector3.new(360, 155, 310),
+	["Mushroom Cave"]           = Vector3.new(-1420, 110, 820)
+}
+
+-- ScreenGui Container
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "RuishiFischGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = playerGui
+
+--========================================================--
+-- INTRO LOADING SCREEN (EVADE STYLE)
+--========================================================--
+local IntroGui = Instance.new("ScreenGui")
+IntroGui.Name = "RuishiIntroGui"
+IntroGui.ResetOnSpawn = false
+IntroGui.Parent = playerGui
+
+local IntroFrame = Instance.new("Frame")
+IntroFrame.Size = UDim2.new(0, 320, 0, 220)
+IntroFrame.Position = UDim2.new(0.5, -160, 0.5, -110)
+IntroFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+IntroFrame.BorderSizePixel = 0
+IntroFrame.Parent = IntroGui
+
+local IntroCorner = Instance.new("UICorner")
+IntroCorner.CornerRadius = UDim.new(0, 12)
+IntroCorner.Parent = IntroFrame
+
+local IntroStroke = Instance.new("UIStroke")
+IntroStroke.Color = Color3.fromRGB(0, 230, 160)
+IntroStroke.Thickness = 1.5
+IntroStroke.Parent = IntroFrame
+
+local AvatarImg = Instance.new("ImageLabel")
+AvatarImg.Size = UDim2.new(0, 60, 0, 60)
+AvatarImg.Position = UDim2.new(0.5, -30, 0, 25)
+AvatarImg.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+AvatarImg.Image = "rbxassetid://79757823848884"
+AvatarImg.Parent = IntroFrame
+
+local AvCorner = Instance.new("UICorner")
+AvCorner.CornerRadius = UDim.new(0, 12)
+AvCorner.Parent = AvatarImg
+
+local AvStroke = Instance.new("UIStroke")
+AvStroke.Color = Color3.fromRGB(0, 230, 160)
+AvStroke.Thickness = 1
+AvStroke.Parent = AvatarImg
+
+local IntroTitle = Instance.new("TextLabel")
+IntroTitle.Size = UDim2.new(1, 0, 0, 25)
+IntroTitle.Position = UDim2.new(0, 0, 0, 98)
+IntroTitle.BackgroundTransparency = 1
+IntroTitle.Font = Enum.Font.GothamBold
+IntroTitle.Text = "Ruishi Hub"
+IntroTitle.TextColor3 = Color3.fromRGB(0, 230, 160)
+IntroTitle.TextSize = 16
+IntroTitle.Parent = IntroFrame
+
+local IntroSub = Instance.new("TextLabel")
+IntroSub.Size = UDim2.new(1, 0, 0, 20)
+IntroSub.Position = UDim2.new(0, 0, 0, 128)
+IntroSub.BackgroundTransparency = 1
+IntroSub.Font = Enum.Font.GothamMedium
+IntroSub.Text = "Loading Fisch Module..."
+IntroSub.TextColor3 = Color3.fromRGB(160, 160, 175)
+IntroSub.TextSize = 12
+IntroSub.Parent = IntroFrame
+
+task.spawn(function()
+	task.wait(1.5)
+	local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	TweenService:Create(IntroFrame, tweenInfo, {BackgroundTransparency = 1}):Play()
+	for _, child in ipairs(IntroFrame:GetDescendants()) do
+		if child:IsA("TextLabel") then
+			TweenService:Create(child, tweenInfo, {TextTransparency = 1}):Play()
+		elseif child:IsA("ImageLabel") then
+			TweenService:Create(child, tweenInfo, {ImageTransparency = 1}):Play()
+		elseif child:IsA("UIStroke") then
+			TweenService:Create(child, tweenInfo, {Transparency = 1}):Play()
+		end
+	end
+	task.wait(0.4)
+	IntroGui:Destroy()
+end)
+
+--========================================================--
+-- MAIN HUB WINDOW (EXACT WIDE EVADE DESIGN)
+--========================================================--
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 560, 0, 340)
+MainFrame.Position = UDim2.new(0.5, -280, 0.5, -170)
+MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 10)
+MainCorner.Parent = MainFrame
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(0, 230, 160)
+MainStroke.Thickness = 1.5
+MainStroke.Parent = MainFrame
+
+-- Top Bar Header
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Size = UDim2.new(1, 0, 0, 36)
+TopBar.BackgroundTransparency = 1
+TopBar.Parent = MainFrame
+
+local HeaderText = Instance.new("TextLabel")
+HeaderText.Size = UDim2.new(1, -50, 1, 0)
+HeaderText.Position = UDim2.new(0, 14, 0, 0)
+HeaderText.BackgroundTransparency = 1
+HeaderText.Font = Enum.Font.GothamBold
+HeaderText.Text = "⚡ Ruishi Premium || Fisch v0.1"
+HeaderText.TextColor3 = Color3.fromRGB(0, 230, 160)
+HeaderText.TextSize = 13
+HeaderText.TextXAlignment = Enum.TextXAlignment.Left
+HeaderText.Parent = TopBar
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Name = "CloseBtn"
+CloseBtn.Size = UDim2.new(0, 22, 0, 22)
+CloseBtn.Position = UDim2.new(1, -30, 0, 7)
+CloseBtn.BackgroundColor3 = Color3.fromRGB(240, 70, 80)
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.Text = "✕"
+CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseBtn.TextSize = 11
+CloseBtn.AutoButtonColor = false
+CloseBtn.Parent = TopBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 5)
+CloseCorner.Parent = CloseBtn
+
+-- Separator Line
+local DivLine = Instance.new("Frame")
+DivLine.Size = UDim2.new(1, 0, 0, 1)
+DivLine.Position = UDim2.new(0, 0, 0, 36)
+DivLine.BackgroundColor3 = Color3.fromRGB(25, 25, 32)
+DivLine.BorderSizePixel = 0
+DivLine.Parent = MainFrame
+
+--========================================================--
+-- SIDEBAR NAVIGATION (LEFT COLUMN)
+--========================================================--
+local Sidebar = Instance.new("Frame")
+Sidebar.Name = "Sidebar"
+Sidebar.Size = UDim2.new(0, 130, 1, -37)
+Sidebar.Position = UDim2.new(0, 0, 0, 37)
+Sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+Sidebar.BorderSizePixel = 0
+Sidebar.Parent = MainFrame
+
+local SideCorner = Instance.new("UICorner")
+SideCorner.CornerRadius = UDim.new(0, 10)
+SideCorner.Parent = Sidebar
+
+local SideLayout = Instance.new("UIListLayout")
+SideLayout.SortOrder = Enum.SortOrder.LayoutOrder
+SideLayout.Padding = UDim.new(0, 4)
+SideLayout.Parent = Sidebar
+
+local SidePadding = Instance.new("UIPadding")
+SidePadding.PaddingTop = UDim.new(0, 10)
+SidePadding.PaddingLeft = UDim.new(0, 8)
+SidePadding.PaddingRight = UDim.new(0, 8)
+SidePadding.Parent = Sidebar
+
+-- Content Display (Right Panel)
+local ContentPanel = Instance.new("Frame")
+ContentPanel.Name = "ContentPanel"
+ContentPanel.Size = UDim2.new(1, -140, 1, -47)
+ContentPanel.Position = UDim2.new(0, 135, 0, 42)
+ContentPanel.BackgroundTransparency = 1
+ContentPanel.Parent = MainFrame
+
+local Categories = {}
+local TabButtons = {}
+
+local function createTab(name)
+	local scroll = Instance.new("ScrollingFrame")
+	scroll.Name = name .. "Tab"
+	scroll.Size = UDim2.new(1, -5, 1, 0)
+	scroll.BackgroundTransparency = 1
+	scroll.BorderSizePixel = 0
+	scroll.ScrollBarThickness = 3
+	scroll.ScrollBarImageColor3 = Color3.fromRGB(0, 230, 160)
+	scroll.Visible = false
+	scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+	scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	scroll.Parent = ContentPanel
+
+	local layout = Instance.new("UIListLayout")
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, 8)
+	layout.Parent = scroll
+
+	local pad = Instance.new("UIPadding")
+	pad.PaddingRight = UDim.new(0, 8)
+	pad.Parent = scroll
+
+	-- Section Header Text Inside Tab
+	local header = Instance.new("TextLabel")
+	header.Size = UDim2.new(1, 0, 0, 25)
+	header.BackgroundTransparency = 1
+	header.Font = Enum.Font.GothamBold
+	header.Text = "FISCH " .. name:upper() .. " MODIFIERS"
+	header.TextColor3 = Color3.fromRGB(0, 230, 160)
+	header.TextSize = 11
+	header.TextXAlignment = Enum.TextXAlignment.Left
+	header.Parent = scroll
+
+	Categories[name] = scroll
+	return scroll
+end
+
+local function selectTab(name)
+	for tabName, frame in pairs(Categories) do
+		frame.Visible = (tabName == name)
+	end
+	for btnName, btn in pairs(TabButtons) do
+		if btnName == name then
+			btn.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+			btn.TextColor3 = Color3.fromRGB(0, 230, 160)
+		else
+			btn.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+			btn.TextColor3 = Color3.fromRGB(130, 130, 145)
+		end
+	end
+end
+
+local function createTabButton(name)
+	local btn = Instance.new("TextButton")
+	btn.Name = name .. "TabBtn"
+	btn.Size = UDim2.new(1, 0, 0, 32)
+	btn.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+	btn.BorderSizePixel = 0
+	btn.Font = Enum.Font.GothamSemibold
+	btn.Text = name
+	btn.TextColor3 = Color3.fromRGB(130, 130, 145)
+	btn.TextSize = 12
+	btn.TextXAlignment = Enum.TextXAlignment.Left
+	btn.AutoButtonColor = false
+	btn.Parent = Sidebar
+
+	local btnPad = Instance.new("UIPadding")
+	btnPad.PaddingLeft = UDim.new(0, 10)
+	btnPad.Parent = btn
+
+	local btnCorner = Instance.new("UICorner")
+	btnCorner.CornerRadius = UDim.new(0, 6)
+	btnCorner.Parent = btn
+
+	TabButtons[name] = btn
+	btn.MouseButton1Click:Connect(function() selectTab(name) end)
+	return btn
+end
+
+-- Tabs Creation
+local PlayerTab = createTab("Player")
+local TeleportTab = createTab("Teleport")
+local AutoBuyTab = createTab("Auto Buy")
+
+createTabButton("Player")
+createTabButton("Teleport")
+createTabButton("Auto Buy")
+
+--========================================================--
+-- COMPONENTS (TOGGLES, SLIDERS, DROPDOWNS)
+--========================================================--
+
+local function createToggle(parent, title, default, callback)
+	local row = Instance.new("Frame")
+	row.Size = UDim2.new(1, 0, 0, 38)
+	row.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+	row.BorderSizePixel = 0
+	row.Parent = parent
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = row
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, -50, 1, 0)
+	label.Position = UDim2.new(0, 12, 0, 0)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamMedium
+	label.Text = title
+	label.TextColor3 = Color3.fromRGB(210, 210, 225)
+	label.TextSize = 12
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = row
+
+	local toggleBtn = Instance.new("TextButton")
+	toggleBtn.Size = UDim2.new(0, 36, 0, 18)
+	toggleBtn.Position = UDim2.new(1, -46, 0.5, -9)
+	toggleBtn.BackgroundColor3 = default and Color3.fromRGB(0, 230, 160) or Color3.fromRGB(35, 35, 45)
+	toggleBtn.Text = ""
+	toggleBtn.AutoButtonColor = false
+	toggleBtn.Parent = row
+
+	local btnCorner = Instance.new("UICorner")
+	btnCorner.CornerRadius = UDim.new(1, 0)
+	btnCorner.Parent = toggleBtn
+
+	local circle = Instance.new("Frame")
+	circle.Size = UDim2.new(0, 14, 0, 14)
+	circle.Position = default and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+	circle.BackgroundColor3 = default and Color3.fromRGB(12, 12, 16) or Color3.fromRGB(180, 180, 190)
+	circle.BorderSizePixel = 0
+	circle.Parent = toggleBtn
+
+	local circleCorner = Instance.new("UICorner")
+	circleCorner.CornerRadius = UDim.new(1, 0)
+	circleCorner.Parent = circle
+
+	local toggled = default
+	toggleBtn.MouseButton1Click:Connect(function()
+		toggled = not toggled
+		if toggled then
+			circle:TweenPosition(UDim2.new(1, -16, 0.5, -7), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+			toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 230, 160)
+			circle.BackgroundColor3 = Color3.fromRGB(12, 12, 16)
+		else
+			circle:TweenPosition(UDim2.new(0, 2, 0.5, -7), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+			toggleBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+			circle.BackgroundColor3 = Color3.fromRGB(180, 180, 190)
+		end
+		callback(toggled)
+	end)
+end
+
+local function createSlider(parent, title, min, default, max, callback)
+	local row = Instance.new("Frame")
+	row.Size = UDim2.new(1, 0, 0, 48)
+	row.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+	row.BorderSizePixel = 0
+	row.Parent = parent
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = row
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, -20, 0, 22)
+	label.Position = UDim2.new(0, 12, 0, 4)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamMedium
+	label.Text = title .. " : " .. default
+	label.TextColor3 = Color3.fromRGB(210, 210, 225)
+	label.TextSize = 12
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = row
+
+	local track = Instance.new("Frame")
+	track.Size = UDim2.new(1, -24, 0, 6)
+	track.Position = UDim2.new(0, 12, 0, 30)
+	track.BackgroundColor3 = Color3.fromRGB(35, 35, 45)
+	track.BorderSizePixel = 0
+	track.Parent = row
+
+	local trackCorner = Instance.new("UICorner")
+	trackCorner.CornerRadius = UDim.new(1, 0)
+	trackCorner.Parent = track
+
+	local fill = Instance.new("Frame")
+	fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+	fill.BackgroundColor3 = Color3.fromRGB(0, 230, 160)
+	fill.BorderSizePixel = 0
+	fill.Parent = track
+
+	local fillCorner = Instance.new("UICorner")
+	fillCorner.CornerRadius = UDim.new(1, 0)
+	fillCorner.Parent = fill
+
+	local dragging = false
+	track.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+		end
+	end)
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local pos = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+			fill.Size = UDim2.new(pos, 0, 1, 0)
+			local val = math.floor(min + (max - min) * pos)
+			label.Text = title .. " : " .. val
+			callback(val)
+		end
+	end)
+end
+
+--========================================================--
+-- PLAYER TAB FEATURES
+--========================================================--
+local walkSpeed = 16
+local jumpPower = 50
+local noclip = false
+local infJump = false
+
+createSlider(PlayerTab, "Speed", 16, 16, 150, function(v)
+	walkSpeed = v
+	if player.Character and player.Character:FindFirstChild("Humanoid") then
+		player.Character.Humanoid.WalkSpeed = walkSpeed
+	end
+end)
+
+createSlider(PlayerTab, "Jump Power", 50, 50, 200, function(v)
+	jumpPower = v
+	if player.Character and player.Character:FindFirstChild("Humanoid") then
+		player.Character.Humanoid.UseJumpPower = true
+		player.Character.Humanoid.JumpPower = jumpPower
+	end
+end)
+
+createToggle(PlayerTab, "Noclip", false, function(v) noclip = v end)
+createToggle(PlayerTab, "Infinite Jump", false, function(v) infJump = v end)
+
+--========================================================--
+-- TELEPORT TAB FEATURES
+--========================================================--
+local sortedLocs = {}
+for name in pairs(Locations) do table.insert(sortedLocs, name) end
+table.sort(sortedLocs)
+
+local selectedPos = nil
+
+local DropFrame = Instance.new("Frame")
+DropFrame.Size = UDim2.new(1, 0, 0, 38)
+DropFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+DropFrame.BorderSizePixel = 0
+DropFrame.ZIndex = 5
+DropFrame.Parent = TeleportTab
+
+local DropCorner = Instance.new("UICorner")
+DropCorner.CornerRadius = UDim.new(0, 6)
+DropCorner.Parent = DropFrame
+
+local DropBtn = Instance.new("TextButton")
+DropBtn.Size = UDim2.new(1, 0, 1, 0)
+DropBtn.BackgroundTransparency = 1
+DropBtn.Font = Enum.Font.GothamMedium
+DropBtn.Text = "  Select Destination..."
+DropBtn.TextColor3 = Color3.fromRGB(0, 230, 160)
+DropBtn.TextSize = 12
+DropBtn.TextXAlignment = Enum.TextXAlignment.Left
+DropBtn.ZIndex = 6
+DropBtn.Parent = DropFrame
+
+local DropList = Instance.new("ScrollingFrame")
+DropList.Size = UDim2.new(1, 0, 0, 140)
+DropList.Position = UDim2.new(0, 0, 1, 4)
+DropList.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+DropList.BorderSizePixel = 0
+DropList.ScrollBarThickness = 3
+DropList.ScrollBarImageColor3 = Color3.fromRGB(0, 230, 160)
+DropList.Visible = false
+DropList.ZIndex = 10
+DropList.CanvasSize = UDim2.new(0, 0, 0, 0)
+DropList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+DropList.Parent = DropFrame
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ListLayout.Parent = DropList
+
+for _, locName in ipairs(sortedLocs) do
+	local opt = Instance.new("TextButton")
+	opt.Size = UDim2.new(1, 0, 0, 26)
+	opt.BackgroundTransparency = 1
+	opt.Font = Enum.Font.GothamMedium
+	opt.Text = "  " .. locName
+	opt.TextColor3 = Color3.fromRGB(200, 200, 215)
+	opt.TextSize = 11
+	opt.TextXAlignment = Enum.TextXAlignment.Left
+	opt.ZIndex = 11
+	opt.Parent = DropList
+
+	opt.MouseButton1Click:Connect(function()
+		selectedPos = Locations[locName]
+		DropBtn.Text = "  " .. locName
+		DropList.Visible = false
+	end)
+end
+
+DropBtn.MouseButton1Click:Connect(function()
+	DropList.Visible = not DropList.Visible
+end)
+
+local TpBtn = Instance.new("TextButton")
+TpBtn.Size = UDim2.new(1, 0, 0, 36)
+TpBtn.BackgroundColor3 = Color3.fromRGB(0, 230, 160)
+TpBtn.BorderSizePixel = 0
+TpBtn.Font = Enum.Font.GothamBold
+TpBtn.Text = "TELEPORT NOW"
+TpBtn.TextColor3 = Color3.fromRGB(12, 12, 16)
+TpBtn.TextSize = 12
+TpBtn.AutoButtonColor = false
+TpBtn.Parent = TeleportTab
+
+local TpCorner = Instance.new("UICorner")
+TpCorner.CornerRadius = UDim.new(0, 6)
+TpCorner.Parent = TpBtn
+
+TpBtn.MouseButton1Click:Connect(function()
+	if selectedPos and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		player.Character.HumanoidRootPart.CFrame = CFrame.new(selectedPos)
+	end
+end)
+
+--========================================================--
+-- AUTO BUY TAB FEATURES
+--========================================================--
+local crateQty = 1
+
+local QtyFrame = Instance.new("Frame")
+QtyFrame.Size = UDim2.new(1, 0, 0, 38)
+QtyFrame.BackgroundColor3 = Color3.fromRGB(18, 18, 24)
+QtyFrame.BorderSizePixel = 0
+QtyFrame.ZIndex = 5
+QtyFrame.Parent = AutoBuyTab
+
+local QtyCorner = Instance.new("UICorner")
+QtyCorner.CornerRadius = UDim.new(0, 6)
+QtyCorner.Parent = QtyFrame
+
+local QtyBtn = Instance.new("TextButton")
+QtyBtn.Size = UDim2.new(1, 0, 1, 0)
+QtyBtn.BackgroundTransparency = 1
+QtyBtn.Font = Enum.Font.GothamMedium
+QtyBtn.Text = "  Amount: 1 Crate"
+QtyBtn.TextColor3 = Color3.fromRGB(0, 230, 160)
+QtyBtn.TextSize = 12
+QtyBtn.TextXAlignment = Enum.TextXAlignment.Left
+QtyBtn.ZIndex = 6
+QtyBtn.Parent = QtyFrame
+
+local QtyList = Instance.new("ScrollingFrame")
+QtyList.Size = UDim2.new(1, 0, 0, 130)
+QtyList.Position = UDim2.new(0, 0, 1, 4)
+QtyList.BackgroundColor3 = Color3.fromRGB(22, 22, 30)
+QtyList.BorderSizePixel = 0
+QtyList.ScrollBarThickness = 3
+QtyList.ScrollBarImageColor3 = Color3.fromRGB(0, 230, 160)
+QtyList.Visible = false
+QtyList.ZIndex = 10
+QtyList.CanvasSize = UDim2.new(0, 0, 0, 0)
+QtyList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+QtyList.Parent = QtyFrame
+
+local QtyLayout = Instance.new("UIListLayout")
+QtyLayout.SortOrder = Enum.SortOrder.LayoutOrder
+QtyLayout.Parent = QtyList
+
+for i = 0, 50 do
+	local opt = Instance.new("TextButton")
+	opt.Size = UDim2.new(1, 0, 0, 26)
+	opt.BackgroundTransparency = 1
+	opt.Font = Enum.Font.GothamMedium
+	opt.Text = "  " .. i .. " Crates"
+	opt.TextColor3 = Color3.fromRGB(200, 200, 215)
+	opt.TextSize = 11
+	opt.TextXAlignment = Enum.TextXAlignment.Left
+	opt.ZIndex = 11
+	opt.Parent = QtyList
+
+	opt.MouseButton1Click:Connect(function()
+		crateQty = i
+		QtyBtn.Text = "  Amount: " .. i .. " Crates"
+		QtyList.Visible = false
+	end)
+end
+
+QtyBtn.MouseButton1Click:Connect(function()
+	QtyList.Visible = not QtyList.Visible
+end)
+
+local BuyBtn = Instance.new("TextButton")
+BuyBtn.Size = UDim2.new(1, 0, 0, 36)
+BuyBtn.BackgroundColor3 = Color3.fromRGB(0, 230, 160)
+BuyBtn.BorderSizePixel = 0
+BuyBtn.Font = Enum.Font.GothamBold
+BuyBtn.Text = "INSTA BUY BAIT CRATES"
+BuyBtn.TextColor3 = Color3.fromRGB(12, 12, 16)
+BuyBtn.TextSize = 12
+BuyBtn.AutoButtonColor = false
+BuyBtn.Parent = AutoBuyTab
+
+local BuyCorner = Instance.new("UICorner")
+BuyCorner.CornerRadius = UDim.new(0, 6)
+BuyCorner.Parent = BuyBtn
+
+BuyBtn.MouseButton1Click:Connect(function()
+	if crateQty <= 0 then return end
+	task.spawn(function()
+		BuyBtn.Text = "PURCHASING..."
+		for i = 1, crateQty do
+			pcall(function()
+				if ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("purchase") then
+					ReplicatedStorage.events.purchase:FireServer("Bait Crate")
+				elseif ReplicatedStorage:FindFirstChild("packages") and ReplicatedStorage.packages:FindFirstChild("Net") then
+					ReplicatedStorage.packages.Net["RE/PurchaseBaitCrate"]:FireServer()
+				end
+			end)
+			task.wait(0.05)
+		end
+		BuyBtn.Text = "PURCHASE COMPLETE"
+		task.wait(1.2)
+		BuyBtn.Text = "INSTA BUY BAIT CRATES"
+	end)
+end)
+
+selectTab("Player")
+
+--========================================================--
+-- LOOPS & DRAGGABLE SYSTEM
+--========================================================--
+CloseBtn.MouseButton1Click:Connect(function()
+	ScreenGui:Destroy()
+end)
+
+UserInputService.JumpRequest:Connect(function()
+	if infJump and player.Character and player.Character:FindFirstChild("Humanoid") then
+		player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	local char = player.Character
+	if not char then return end
+	local hum = char:FindFirstChild("Humanoid")
+	if hum then
+		if hum.WalkSpeed ~= walkSpeed then hum.WalkSpeed = walkSpeed end
+		if hum.JumpPower ~= jumpPower then
+			hum.UseJumpPower = true
+			hum.JumpPower = jumpPower
+		end
+	end
+	if noclip then
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") and part.CanCollide then
+				part.CanCollide = false
+			end
+		end
+	end
+end)
+
+-- Draggable TopBar
+local dragging, dragStart, startPos
+TopBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = MainFrame.Position
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
+
+-- Mobile Floating Toggle Icon
+local MobBtn = Instance.new("ImageButton")
+MobBtn.Size = UDim2.new(0, 44, 0, 44)
+MobBtn.Position = UDim2.new(0, 20, 0.5, -22)
+MobBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+MobBtn.Image = "rbxassetid://79757823848884"
+MobBtn.Parent = ScreenGui
+
+local MobCorner = Instance.new("UICorner")
+MobCorner.CornerRadius = UDim.new(0, 10)
+MobCorner.Parent = MobBtn
+
+local MobStroke = Instance.new("UIStroke")
+MobStroke.Color = Color3.fromRGB(0, 230, 160)
+MobStroke.Thickness = 1.5
+MobStroke.Parent = MobBtn
+
+MobBtn.MouseButton1Click:Connect(function()
+	MainFrame.Visible = not MainFrame.Visible
+end)
