@@ -1,0 +1,1936 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local LocalPlayer = Players.LocalPlayer
+
+
+
+local COLORS = {
+    Background = Color3.fromRGB(8, 8, 14),
+    Panel = Color3.fromRGB(13, 13, 20),
+    Button = Color3.fromRGB(20, 20, 30),
+    ButtonHover = Color3.fromRGB(27, 27, 40),
+    Accent = Color3.fromRGB(0, 255, 204),
+    Text = Color3.fromRGB(200, 200, 220),
+    DarkText = Color3.fromRGB(10, 10, 15),
+    Muted = Color3.fromRGB(120, 120, 140)
+}
+
+
+local PlayerState = {
+    WalkSpeed = 16,
+    JumpPower = 16,
+
+    InfiniteJump = false,
+    Fly = false,
+    Noclip = false,
+    ESP = false,
+
+    SelectedPlayer = nil
+}
+
+local ReelState = {
+    Mode = "Normal",
+    Active = false,
+    Progress = 0,
+    Success = false
+}
+
+local HoldingReel = false
+
+
+-- CHARACTER HELPERS
+local function GetCharacter()
+    return LocalPlayer.Character
+end
+
+local function GetHumanoid()
+    local Character = GetCharacter()
+
+    if not Character then
+        return nil
+    end
+
+    return Character:FindFirstChildOfClass("Humanoid")
+end
+
+local function GetRoot()
+    local Character = GetCharacter()
+
+    if not Character then
+        return nil
+    end
+
+    return Character:FindFirstChild("HumanoidRootPart")
+end
+
+-- PLAYER MOVEMENT
+local function SetWalkSpeed(Value)
+    Value = math.clamp(
+        math.round(tonumber(Value) or 16),
+        16,
+        500
+    )
+    PlayerState.WalkSpeed = Value
+    local Humanoid = GetHumanoid()
+    if Humanoid then
+        Humanoid.WalkSpeed = Value
+    end
+end
+
+local function SetJumpPower(Value)
+    Value = math.clamp(
+        math.round(tonumber(Value) or 16),
+        16,
+        500
+    )
+    
+    PlayerState.JumpPower = Value
+
+    local Humanoid = GetHumanoid()
+
+    if Humanoid then
+        Humanoid.UseJumpPower = true
+        Humanoid.JumpPower = Value
+    end
+end
+
+-- Reapply settings after respawn.
+LocalPlayer.CharacterAdded:Connect(function(Character)
+
+    local Humanoid =
+        Character:WaitForChild("Humanoid", 10)
+
+    if not Humanoid then
+        return
+    end
+
+    task.wait()
+
+    Humanoid.WalkSpeed =
+        PlayerState.WalkSpeed
+
+    Humanoid.UseJumpPower = true
+
+    Humanoid.JumpPower =
+        PlayerState.JumpPower
+end)
+
+
+-- INFINITE JUMP
+
+
+UserInputService.JumpRequest:Connect(function()
+
+    if not PlayerState.InfiniteJump then
+        return
+    end
+
+    local Humanoid = GetHumanoid()
+
+    if Humanoid then
+        Humanoid:ChangeState(
+            Enum.HumanoidStateType.Jumping
+        )
+    end
+end)
+
+
+-- FLY
+
+
+local FlyConnection
+
+local function StopFly()
+
+    if FlyConnection then
+        FlyConnection:Disconnect()
+        FlyConnection = nil
+    end
+
+    local Humanoid = GetHumanoid()
+
+    if Humanoid then
+        Humanoid.AutoRotate = true
+    end
+end
+
+local function StartFly()
+    StopFly()
+    FlyConnection =
+    RunService.RenderStepped:Connect(function()
+        if not PlayerState.Fly then
+            return
+        end
+
+    local Root = GetRoot()
+    local Humanoid = GetHumanoid()
+    if not Root or not Humanoid then
+        return
+    end
+
+    local Camera =
+    workspace.CurrentCamera
+    if not Camera then
+        return
+    end
+
+    Humanoid.AutoRotate = false
+
+    local Direction =
+    Humanoid.MoveDirection
+    local Vertical = 0
+    if UserInputService:IsKeyDown(
+        Enum.KeyCode.Space
+    )
+    then
+        Vertical = 1
+    elseif UserInputService:IsKeyDown(
+        Enum.KeyCode.LeftControl
+    )
+    then
+        Vertical = -1
+    end
+    
+    Direction =
+    Direction +
+    Vector3.new(0, Vertical, 0)
+    if Direction.Magnitude > 0 then
+        Root.AssemblyLinearVelocity =
+        Direction.Unit * 70
+        else
+            Root.AssemblyLinearVelocity =
+            Vector3.zero
+            end
+        end)
+    end
+
+local function SetFly(State)
+
+    PlayerState.Fly = State
+
+    if State then
+        StartFly()
+    else
+        StopFly()
+        local Root = GetRoot()
+        if Root then
+            Root.AssemblyLinearVelocity =
+            Vector3.zero
+        end
+    end
+end
+
+
+-- NOCLIP
+
+
+local NoclipConnection
+
+local function StartNoclip()
+
+    if NoclipConnection then
+        NoclipConnection:Disconnect()
+    end
+
+    NoclipConnection =
+        RunService.Stepped:Connect(function()
+            if not PlayerState.Noclip then
+                return
+        end
+        
+        local Character =
+        GetCharacter()
+        if not Character then
+            return
+        end
+
+            for _, Object in ipairs(
+                Character:GetDescendants()
+            ) do
+
+                if Object:IsA("BasePart") then
+                    Object.CanCollide = false
+                end
+            end
+        end)
+end
+
+local function StopNoclip()
+
+    if NoclipConnection then
+        NoclipConnection:Disconnect()
+        NoclipConnection = nil
+    end
+
+    local Character =
+        GetCharacter()
+
+    if not Character then
+        return
+    end
+
+    for _, Object in ipairs(
+        Character:GetDescendants()
+    ) do
+
+        if Object:IsA("BasePart") then
+            Object.CanCollide = true
+        end
+    end
+end
+
+local function SetNoclip(State)
+
+    PlayerState.Noclip = State
+
+    if State then
+        StartNoclip()
+    else
+        StopNoclip()
+    end
+end
+
+
+-- LIGHTWEIGHT PLAYER ESP
+
+
+local ESPFolder =
+    Instance.new("Folder")
+
+ESPFolder.Name =
+    "LocalPlayerESP"
+
+ESPFolder.Parent =
+    workspace
+
+local ESPObjects = {}
+
+local function RemoveESP(Player)
+
+    local Highlight =
+        ESPObjects[Player]
+
+    if Highlight then
+        Highlight:Destroy()
+        ESPObjects[Player] = nil
+    end
+end
+
+local function AddESP(Player)
+
+    if Player == LocalPlayer then
+        return
+    end
+
+    if ESPObjects[Player] then
+        return
+    end
+
+    local Character =
+        Player.Character
+
+    if not Character then
+        return
+    end
+
+    local Highlight =
+        Instance.new("Highlight")
+
+    Highlight.Name =
+        "ESP_" .. Player.UserId
+
+    Highlight.Adornee =
+        Character
+
+    Highlight.DepthMode =
+        Enum.HighlightDepthMode.AlwaysOnTop
+
+    Highlight.FillTransparency =
+        0.75
+
+    Highlight.OutlineTransparency =
+        0
+
+    Highlight.Parent =
+        ESPFolder
+
+    ESPObjects[Player] =
+        Highlight
+end
+
+local function RefreshESP()
+
+    if not PlayerState.ESP then
+
+        for Player in pairs(ESPObjects) do
+            RemoveESP(Player)
+        end
+
+        return
+    end
+
+    for _, Player in ipairs(
+        Players:GetPlayers()
+    ) do
+
+        AddESP(Player)
+    end
+end
+
+local function SetESP(State)
+
+    PlayerState.ESP = State
+
+    RefreshESP()
+end
+
+Players.PlayerAdded:Connect(function(Player)
+
+    Player.CharacterAdded:Connect(function()
+
+        if PlayerState.ESP then
+            task.wait(0.2)
+            AddESP(Player)
+        end
+    end)
+
+    if PlayerState.ESP then
+        AddESP(Player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(Player)
+
+    RemoveESP(Player)
+
+    if PlayerState.SelectedPlayer ==
+        Player then
+
+        PlayerState.SelectedPlayer = nil
+    end
+end)
+
+
+-- TP TO PLAYER
+
+
+local function TeleportToPlayer(Player)
+
+    if not Player then
+        return
+    end
+
+    local TargetCharacter =
+        Player.Character
+
+    local TargetRoot =
+        TargetCharacter
+        and TargetCharacter:FindFirstChild(
+            "HumanoidRootPart"
+        )
+
+    local Root =
+        GetRoot()
+
+    if not Root or not TargetRoot then
+        return
+    end
+
+    Root.CFrame =
+        TargetRoot.CFrame *
+        CFrame.new(0, 0, 4)
+end
+
+
+-- MERCHANT LOCATIONS
+
+
+local MerchantLocations = {
+
+    ["Moosewood Merchant"] =
+        CFrame.new(465, 150, 230),
+
+    ["Roslit Bay Merchant"] =
+        CFrame.new(-1454, 133, 675),
+
+    ["Snowcap Island Merchant"] =
+        CFrame.new(2717, 157, 2374),
+
+    ["Sunstone Island Merchant"] =
+        CFrame.new(-930, 130, -1105),
+
+    ["Forsaken Shores Merchant"] =
+        CFrame.new(-2509, 135, 1582),
+
+    ["Ancient Isle Merchant"] =
+        CFrame.new(6080, 195, 309),
+
+    ["Northern Summit Merchant"] =
+        CFrame.new(19574, 132, 5312),
+
+    ["Atlantis Merchant"] =
+        CFrame.new(-4459, -605, 1879)
+}
+
+local function TeleportToMerchant(Name)
+
+    local Destination =
+        MerchantLocations[Name]
+
+    if not Destination then
+        return
+    end
+
+    local Root =
+        GetRoot()
+
+    if not Root then
+        return
+    end
+
+    Root.CFrame =
+        Destination
+end
+
+
+-- REEL SYSTEM
+
+
+local function StartReel()
+
+    if ReelState.Active then
+        return
+    end
+
+    ReelState.Active = true
+    ReelState.Progress = 0
+    ReelState.Success = false
+
+    if ReelState.Mode == "Normal" then
+
+        print("Normal reel started")
+
+    elseif ReelState.Mode == "Legit" then
+
+        print("Legit reel started")
+
+    elseif ReelState.Mode == "Instant" then
+
+        print("Instant reel started")
+
+        ReelState.Progress = 1
+        ReelState.Success = true
+        ReelState.Active = false
+    end
+end
+
+local function FinishReel(Success)
+
+    ReelState.Active = false
+    ReelState.Progress =
+        Success and 1 or 0
+
+    ReelState.Success =
+        Success
+end
+
+local function UpdateReel(DeltaTime)
+
+    if not ReelState.Active then
+        return
+    end
+
+    if ReelState.Mode == "Normal" then
+        if HoldingReel then
+            ReelState.Progress = ReelState.Progress + (DeltaTime * 0.35)
+            else
+                ReelState.Progress = ReelState.Progress - (DeltaTime * 0.12)
+                end
+
+    elseif ReelState.Mode == "Legit" then
+
+        if HoldingReel then
+
+            ReelState.Progress = ReelState.Progress +
+                (DeltaTime * 0.42)
+
+        else
+
+            ReelState.Progress = ReelState -
+                (DeltaTime * 0.07)
+        end
+    end
+
+    ReelState.Progress =
+        math.clamp(
+            ReelState.Progress,
+            0,
+            1
+        )
+
+    if ReelState.Progress >= 1 then
+        FinishReel(true)
+
+    elseif ReelState.Progress <= 0 then
+        FinishReel(false)
+    end
+end
+
+RunService.RenderStepped:Connect(UpdateReel)
+
+UserInputService.InputBegan:Connect(
+    function(Input, Processed)
+
+        if Processed then
+            return
+        end
+
+        if Input.KeyCode ==
+            Enum.KeyCode.Space then
+
+            HoldingReel = true
+
+            if not ReelState.Active then
+                StartReel()
+            end
+        end
+    end
+)
+
+UserInputService.InputEnded:Connect(
+    function(Input)
+
+        if Input.KeyCode ==
+            Enum.KeyCode.Space then
+
+            HoldingReel = false
+        end
+    end
+)
+
+
+-- GUI
+
+
+local Existing =
+    LocalPlayer.PlayerGui:
+    FindFirstChild("CompleteControlUI")
+
+if Existing then
+    Existing:Destroy()
+end
+
+local ScreenGui =
+    Instance.new("ScreenGui")
+
+ScreenGui.Name =
+    "CompleteControlUI"
+
+ScreenGui.ResetOnSpawn =
+    false
+
+ScreenGui.Parent =
+    LocalPlayer.PlayerGui
+
+
+-- MAIN WINDOW
+
+
+local Main =
+    Instance.new("Frame")
+
+Main.Parent =
+    ScreenGui
+
+Main.BackgroundColor3 =
+    COLORS.Background
+
+Main.BorderSizePixel = 0
+
+Main.Position =
+    UDim2.new(
+        0.5,
+        -190,
+        0.5,
+        -250
+    )
+
+Main.Size =
+    UDim2.new(
+        0,
+        380,
+        0,
+        500
+    )
+
+local MainCorner =
+    Instance.new("UICorner")
+
+MainCorner.CornerRadius =
+    UDim.new(0, 12)
+
+MainCorner.Parent =
+    Main
+
+
+-- TITLE
+
+
+local Title =
+    Instance.new("TextLabel")
+
+Title.Parent =
+    Main
+
+Title.BackgroundTransparency = 1
+
+Title.Position =
+    UDim2.new(
+        0,
+        15,
+        0,
+        10
+    )
+
+Title.Size =
+    UDim2.new(
+        1,
+        -30,
+        0,
+        28
+    )
+
+Title.Font =
+    Enum.Font.GothamBold
+
+Title.Text =
+    "CONTROL PANEL"
+
+Title.TextColor3 =
+    COLORS.Accent
+
+Title.TextSize =
+    17
+
+Title.TextXAlignment =
+    Enum.TextXAlignment.Left
+
+
+-- CATEGORY BUTTONS
+
+
+local CategoryBar =
+    Instance.new("Frame")
+
+CategoryBar.Parent =
+    Main
+
+CategoryBar.BackgroundTransparency = 1
+
+CategoryBar.Position =
+    UDim2.new(
+        0,
+        10,
+        0,
+        45
+    )
+
+CategoryBar.Size =
+    UDim2.new(
+        1,
+        -20,
+        0,
+        35
+    )
+
+local CategoryLayout =
+    Instance.new("UIListLayout")
+
+CategoryLayout.Parent =
+    CategoryBar
+
+CategoryLayout.FillDirection =
+    Enum.FillDirection.Horizontal
+
+CategoryLayout.Padding =
+    UDim.new(0, 5)
+
+CategoryLayout.SortOrder =
+    Enum.SortOrder.LayoutOrder
+
+
+-- CONTENT
+
+
+local Content =
+    Instance.new("ScrollingFrame")
+
+Content.Parent =
+    Main
+
+Content.BackgroundTransparency = 1
+
+Content.BorderSizePixel = 0
+
+Content.Position =
+    UDim2.new(
+        0,
+        5,
+        0,
+        85
+    )
+
+Content.Size =
+    UDim2.new(
+        1,
+        -10,
+        1,
+        -90
+    )
+
+Content.ScrollBarThickness =
+    4
+
+Content.ScrollBarImageColor3 =
+    COLORS.Accent
+
+Content.CanvasSize =
+    UDim2.new(
+        0,
+        0,
+        0,
+        0
+    )
+
+
+-- CATEGORY FRAMES
+
+
+local Categories = {}
+
+local function CreateCategory(Name)
+
+    local Frame =
+        Instance.new("Frame")
+
+    Frame.Name =
+        Name .. "Category"
+
+    Frame.Parent =
+        Content
+
+    Frame.BackgroundTransparency =
+        1
+
+    Frame.Size =
+        UDim2.new(
+            1,
+            -5,
+            0,
+            1
+        )
+
+    Frame.Visible = false
+
+    local Layout =
+        Instance.new("UIListLayout")
+
+    Layout.Parent =
+        Frame
+
+    Layout.Padding =
+        UDim.new(0, 8)
+
+    Layout.SortOrder =
+        Enum.SortOrder.LayoutOrder
+
+    Layout:GetPropertyChangedSignal(
+        "AbsoluteContentSize"
+    ):Connect(function()
+
+        Frame.Size =
+            UDim2.new(
+                1,
+                -5,
+                0,
+                Layout.AbsoluteContentSize.Y
+            )
+    end)
+
+    Categories[Name] =
+        Frame
+
+    return Frame
+end
+
+local PlayerCategory =
+    CreateCategory("Player")
+
+local FishingCategory =
+    CreateCategory("Fishing")
+
+local TeleportCategory =
+    CreateCategory("Teleport")
+
+
+-- CATEGORY BUTTON
+
+
+local function CreateCategoryButton(Name)
+
+    local Button =
+        Instance.new("TextButton")
+
+    Button.Parent =
+        CategoryBar
+
+    Button.BackgroundColor3 =
+        COLORS.Button
+
+    Button.BorderSizePixel = 0
+
+    Button.Size =
+        UDim2.new(
+            0,
+            110,
+            0,
+            32
+        )
+
+    Button.Font =
+        Enum.Font.GothamBold
+
+    Button.Text =
+        Name
+
+    Button.TextColor3 =
+        COLORS.Text
+
+    Button.TextSize =
+        11
+
+    Button.AutoButtonColor =
+        false
+
+    local Corner =
+        Instance.new("UICorner")
+
+    Corner.CornerRadius =
+        UDim.new(0, 6)
+
+    Corner.Parent =
+        Button
+
+    Button.MouseButton1Click:Connect(
+        function()
+
+            for CategoryName, Frame in pairs(
+                Categories
+            ) do
+
+                Frame.Visible =
+                    CategoryName == Name
+            end
+
+            for _, Other in ipairs(
+                CategoryBar:GetChildren()
+            ) do
+
+                if Other:IsA("TextButton") then
+
+                    Other.BackgroundColor3 =
+                        COLORS.Button
+
+                    Other.TextColor3 =
+                        COLORS.Text
+                end
+            end
+
+            Button.BackgroundColor3 =
+                COLORS.Accent
+
+            Button.TextColor3 =
+                COLORS.DarkText
+        end
+    )
+
+    return Button
+end
+
+local PlayerButton =
+    CreateCategoryButton("PLAYER")
+
+local FishingButton =
+    CreateCategoryButton("FISHING")
+
+local TeleportButton =
+    CreateCategoryButton("TELEPORT")
+
+
+-- SLIDER
+
+
+local function CreateSlider(
+    Parent,
+    Name,
+    Minimum,
+    Maximum,
+    Default,
+    Callback
+)
+
+    local Frame =
+        Instance.new("Frame")
+
+    Frame.Name =
+        Name .. "Slider"
+
+    Frame.Parent =
+        Parent
+
+    Frame.BackgroundColor3 =
+        COLORS.Panel
+
+    Frame.BorderSizePixel = 0
+
+    Frame.Size =
+        UDim2.new(
+            1,
+            0,
+            0,
+            62
+        )
+
+    local Corner =
+        Instance.new("UICorner")
+
+    Corner.CornerRadius =
+        UDim.new(0, 8)
+
+    Corner.Parent =
+        Frame
+
+    local Label =
+        Instance.new("TextLabel")
+
+    Label.Parent =
+        Frame
+
+    Label.BackgroundTransparency = 1
+
+    Label.Position =
+        UDim2.new(
+            0,
+            12,
+            0,
+            6
+        )
+
+    Label.Size =
+        UDim2.new(
+            0.7,
+            0,
+            0,
+            18
+        )
+
+    Label.Font =
+        Enum.Font.GothamBold
+
+    Label.Text =
+        Name
+
+    Label.TextColor3 =
+        COLORS.Accent
+
+    Label.TextSize =
+        11
+
+    Label.TextXAlignment =
+        Enum.TextXAlignment.Left
+
+    local ValueLabel =
+        Instance.new("TextLabel")
+
+    ValueLabel.Parent =
+        Frame
+
+    ValueLabel.BackgroundTransparency = 1
+
+    ValueLabel.Position =
+        UDim2.new(
+            0.7,
+            0,
+            0,
+            6
+        )
+
+    ValueLabel.Size =
+        UDim2.new(
+            0.25,
+            0,
+            0,
+            18
+        )
+
+    ValueLabel.Font =
+        Enum.Font.GothamBold
+
+    ValueLabel.TextColor3 =
+        COLORS.Text
+
+    ValueLabel.TextSize =
+        11
+
+    ValueLabel.TextXAlignment =
+        Enum.TextXAlignment.Right
+
+    local Bar =
+        Instance.new("Frame")
+
+    Bar.Parent =
+        Frame
+
+    Bar.BackgroundColor3 =
+        COLORS.Button
+
+    Bar.BorderSizePixel = 0
+
+    Bar.Position =
+        UDim2.new(
+            0,
+            12,
+            0,
+            38
+        )
+
+    Bar.Size =
+        UDim2.new(
+            1,
+            -24,
+            0,
+            8
+        )
+
+    local BarCorner =
+        Instance.new("UICorner")
+
+    BarCorner.CornerRadius =
+        UDim.new(1, 0)
+
+    BarCorner.Parent =
+        Bar
+
+    local Fill =
+        Instance.new("Frame")
+
+    Fill.Parent =
+        Bar
+
+    Fill.BackgroundColor3 =
+        COLORS.Accent
+
+    Fill.BorderSizePixel = 0
+
+    Fill.Size =
+        UDim2.new(
+            0,
+            0,
+            1,
+            0
+        )
+
+    local FillCorner =
+        Instance.new("UICorner")
+
+    FillCorner.CornerRadius =
+        UDim.new(1, 0)
+
+    FillCorner.Parent =
+        Fill
+
+    local Dragging = false
+
+    local function SetValue(Value)
+
+        Value =
+            math.clamp(
+                math.round(Value),
+                Minimum,
+                Maximum
+            )
+
+        local Percent =
+            (Value - Minimum) /
+            (Maximum - Minimum)
+
+        Fill.Size =
+            UDim2.new(
+                Percent,
+                0,
+                1,
+                0
+            )
+
+        ValueLabel.Text =
+            tostring(Value)
+
+        Callback(Value)
+    end
+
+    local function Update(X)
+
+        local Percent =
+            math.clamp(
+                (
+                    X -
+                    Bar.AbsolutePosition.X
+                ) /
+                Bar.AbsoluteSize.X,
+                0,
+                1
+            )
+
+        SetValue(
+            Minimum +
+            (Maximum - Minimum) *
+            Percent
+        )
+    end
+
+    Bar.InputBegan:Connect(
+        function(Input)
+
+            if Input.UserInputType ==
+                Enum.UserInputType.MouseButton1
+                or
+                Input.UserInputType ==
+                Enum.UserInputType.Touch
+            then
+
+                Dragging = true
+
+                Update(
+                    Input.Position.X
+                )
+            end
+        end
+    )
+
+    UserInputService.InputChanged:Connect(
+        function(Input)
+
+            if not Dragging then
+                return
+            end
+
+            if Input.UserInputType ==
+                Enum.UserInputType.MouseMovement
+                or
+                Input.UserInputType ==
+                Enum.UserInputType.Touch
+            then
+
+                Update(
+                    Input.Position.X
+                )
+            end
+        end
+    )
+
+    UserInputService.InputEnded:Connect(
+        function(Input)
+
+            if Input.UserInputType ==
+                Enum.UserInputType.MouseButton1
+                or
+                Input.UserInputType ==
+                Enum.UserInputType.Touch
+            then
+
+                Dragging = false
+            end
+        end
+    )
+
+    SetValue(Default)
+
+    return Frame
+end
+
+-- Toggle
+local function CreateToggle(
+    Parent,
+    Name,
+    Default,
+    Callback
+)
+
+    local Button =
+        Instance.new("TextButton")
+
+    Button.Parent =
+        Parent
+
+    Button.BackgroundColor3 =
+        COLORS.Panel
+
+    Button.BorderSizePixel = 0
+
+    Button.Size =
+        UDim2.new(
+            1,
+            0,
+            0,
+            40
+        )
+
+    Button.Font =
+        Enum.Font.GothamBold
+
+    Button.TextSize =
+        11
+
+    Button.TextXAlignment =
+        Enum.TextXAlignment.Left
+
+    Button.AutoButtonColor =
+        false
+
+    local Corner =
+        Instance.new("UICorner")
+
+    Corner.CornerRadius =
+        UDim.new(0, 8)
+
+    Corner.Parent =
+        Button
+
+    local State =
+        Default
+
+    local function Update()
+
+        if State then
+
+            Button.Text =
+                "  " ..
+                Name ..
+                "    ON"
+
+            Button.TextColor3 =
+                COLORS.Accent
+
+        else
+
+            Button.Text =
+                "  " ..
+                Name ..
+                "    OFF"
+
+            Button.TextColor3 =
+                COLORS.Text
+        end
+    end
+
+    Button.MouseButton1Click:Connect(
+        function()
+
+            State =
+                not State
+
+            Update()
+
+            Callback(State)
+        end
+    )
+
+    Update()
+
+    return Button
+end
+
+
+-- scroll selector
+local function CreateScrollSelector(
+    Parent,
+    TitleText,
+    Options,
+    Callback,
+    Height
+)
+
+    Height =
+        Height or 110
+
+    local Frame =
+        Instance.new("Frame")
+
+    Frame.Parent =
+        Parent
+
+    Frame.BackgroundColor3 =
+        COLORS.Panel
+
+    Frame.BorderSizePixel = 0
+
+    Frame.Size =
+        UDim2.new(
+            1,
+            0,
+            0,
+            Height
+        )
+
+    local Corner =
+        Instance.new("UICorner")
+
+    Corner.CornerRadius =
+        UDim.new(0, 8)
+
+    Corner.Parent =
+        Frame
+
+    local Header =
+        Instance.new("TextLabel")
+
+    Header.Parent =
+        Frame
+
+    Header.BackgroundTransparency = 1
+
+    Header.Position =
+        UDim2.new(
+            0,
+            12,
+            0,
+            7
+        )
+
+    Header.Size =
+        UDim2.new(
+            1,
+            -24,
+            0,
+            18
+        )
+
+    Header.Font =
+        Enum.Font.GothamBold
+
+    Header.Text =
+        TitleText
+
+    Header.TextColor3 =
+        COLORS.Accent
+
+    Header.TextSize =
+        11
+
+    Header.TextXAlignment =
+        Enum.TextXAlignment.Left
+
+    local Scroll =
+        Instance.new("ScrollingFrame")
+
+    Scroll.Parent =
+        Frame
+
+    Scroll.BackgroundTransparency = 1
+
+    Scroll.BorderSizePixel = 0
+
+    Scroll.Position =
+        UDim2.new(
+            0,
+            10,
+            0,
+            30
+        )
+
+    Scroll.Size =
+        UDim2.new(
+            1,
+            -20,
+            1,
+            -35
+        )
+
+    Scroll.ScrollBarThickness =
+        4
+
+    Scroll.ScrollBarImageColor3 =
+        COLORS.Accent
+
+    Scroll.CanvasSize =
+        UDim2.new(
+            0,
+            0,
+            0,
+            0
+        )
+
+    local Layout =
+        Instance.new("UIListLayout")
+
+    Layout.Parent =
+        Scroll
+
+    Layout.SortOrder =
+        Enum.SortOrder.LayoutOrder
+
+    Layout.Padding =
+        UDim.new(0, 4)
+
+    local function RefreshCanvas()
+
+        Scroll.CanvasSize =
+            UDim2.new(
+                0,
+                0,
+                0,
+                Layout.AbsoluteContentSize.Y +
+                10
+            )
+    end
+
+    Layout:GetPropertyChangedSignal(
+        "AbsoluteContentSize"
+    ):Connect(RefreshCanvas)
+
+    for Index, Option in ipairs(Options) do
+
+        local Button =
+            Instance.new("TextButton")
+
+        Button.Parent =
+            Scroll
+
+        Button.LayoutOrder =
+            Index
+
+        Button.Size =
+            UDim2.new(
+                1,
+                -8,
+                0,
+                28
+            )
+
+        Button.BackgroundColor3 =
+            COLORS.Button
+
+        Button.BorderSizePixel = 0
+
+        Button.Font =
+            Enum.Font.Gotham
+
+        Button.Text =
+            "  " .. tostring(Option)
+
+        Button.TextColor3 =
+            COLORS.Text
+
+        Button.TextSize =
+            11
+
+        Button.TextXAlignment =
+            Enum.TextXAlignment.Left
+
+        Button.AutoButtonColor =
+            false
+
+        local ButtonCorner =
+            Instance.new("UICorner")
+
+        ButtonCorner.CornerRadius =
+            UDim.new(0, 6)
+
+        ButtonCorner.Parent =
+            Button
+
+        Button.MouseButton1Click:Connect(
+            function()
+
+                for _, Child in ipairs(
+                    Scroll:GetChildren()
+                ) do
+
+                    if Child:IsA(
+                        "TextButton"
+                    ) then
+
+                        Child.BackgroundColor3 =
+                            COLORS.Button
+
+                        Child.TextColor3 =
+                            COLORS.Text
+                    end
+                end
+
+                Button.BackgroundColor3 =
+                    COLORS.Accent
+
+                Button.TextColor3 =
+                    COLORS.DarkText
+
+                Callback(Option)
+            end
+        )
+    end
+
+    task.defer(RefreshCanvas)
+
+    return Frame
+end
+
+-- player category
+CreateSlider(
+    PlayerCategory,
+    "WALK SPEED",
+    16,
+    500,
+    16,
+    SetWalkSpeed
+)
+
+CreateSlider(
+    PlayerCategory,
+    "JUMP POWER",
+    16,
+    500,
+    16,
+    SetJumpPower
+)
+
+CreateToggle(
+    PlayerCategory,
+    "INFINITE JUMP",
+    false,
+    function(State)
+        PlayerState.InfiniteJump = State
+    end
+)
+
+CreateToggle(
+    PlayerCategory,
+    "FLY",
+    false,
+    SetFly
+)
+
+CreateToggle(
+    PlayerCategory,
+    "NOCLIP",
+    false,
+    SetNoclip
+)
+
+CreateToggle(
+    PlayerCategory,
+    "PLAYER ESP",
+    false,
+    SetESP
+)
+
+-- player list
+local function BuildPlayerList()
+
+    local Options = {}
+
+    for _, Player in ipairs(
+        Players:GetPlayers()
+    ) do
+
+        if Player ~= LocalPlayer then
+            table.insert(
+                Options,
+                Player.Name
+            )
+        end
+    end
+
+    table.sort(Options)
+
+    return Options
+end
+
+local PlayerSelector
+
+local function RebuildPlayerSelector()
+
+    if PlayerSelector then
+        PlayerSelector:Destroy()
+    end
+
+    PlayerSelector =
+        CreateScrollSelector(
+            PlayerCategory,
+            "TP TO PLAYER",
+            BuildPlayerList(),
+            function(Name)
+
+                local Target =
+                    Players:FindFirstChild(
+                        Name
+                    )
+
+                if Target then
+
+                    PlayerState.SelectedPlayer =
+                        Target
+
+                    TeleportToPlayer(
+                        Target
+                    )
+                end
+            end,
+            125
+        )
+end
+
+RebuildPlayerSelector()
+
+Players.PlayerAdded:Connect(function()
+    task.wait()
+    RebuildPlayerSelector()
+end)
+
+Players.PlayerRemoving:Connect(function()
+    task.wait()
+    RebuildPlayerSelector()
+end)
+
+-- fisching category
+CreateScrollSelector(
+    FishingCategory,
+    "SELECT REEL MODE",
+    {
+        "Normal",
+        "Legit",
+        "Instant"
+    },
+    function(Mode)
+
+        ReelState.Mode =
+            Mode
+
+        print(
+            "Reel mode:",
+            Mode
+        )
+    end,
+    130
+)
+
+local ReelButton =
+    Instance.new("TextButton")
+
+ReelButton.Parent =
+    FishingCategory
+
+ReelButton.BackgroundColor3 =
+    COLORS.Accent
+
+ReelButton.BorderSizePixel = 0
+
+ReelButton.Size =
+    UDim2.new(
+        1,
+        0,
+        0,
+        40
+    )
+
+ReelButton.Font =
+    Enum.Font.GothamBold
+
+ReelButton.Text =
+    "START REEL"
+
+ReelButton.TextColor3 =
+    COLORS.DarkText
+
+ReelButton.TextSize =
+    12
+
+ReelButton.AutoButtonColor =
+    false
+
+local ReelCorner =
+    Instance.new("UICorner")
+
+ReelCorner.CornerRadius =
+    UDim.new(0, 8)
+
+ReelCorner.Parent =
+    ReelButton
+
+ReelButton.MouseButton1Click:Connect(
+    function()
+
+        StartReel()
+
+        if ReelState.Mode ==
+            "Instant" then
+
+            FinishReel(true)
+        end
+    end
+)
+
+local ReelStatus =
+    Instance.new("TextLabel")
+
+ReelStatus.Parent =
+    FishingCategory
+
+ReelStatus.BackgroundTransparency =
+    1
+
+ReelStatus.Size =
+    UDim2.new(
+        1,
+        0,
+        0,
+        30
+    )
+
+ReelStatus.Font =
+    Enum.Font.Gotham
+
+ReelStatus.Text =
+    "Mode: Normal | Ready"
+
+ReelStatus.TextColor3 =
+    COLORS.Muted
+
+ReelStatus.TextSize =
+    11
+
+RunService.RenderStepped:Connect(
+    function()
+
+        local Status
+
+        if ReelState.Active then
+
+            Status =
+                string.format(
+                    "Mode: %s | Progress: %d%%",
+                    ReelState.Mode,
+                    ReelState.Progress * 100
+                )
+
+        elseif ReelState.Success then
+
+            Status =
+                "Mode: " ..
+                ReelState.Mode ..
+                " | Reel Complete"
+
+        else
+
+            Status =
+                "Mode: " ..
+                ReelState.Mode ..
+                " | Ready"
+        end
+
+        ReelStatus.Text =
+            Status
+    end
+)
+
+
+-- teleport category 
+local MerchantNames = {}
+
+for Name in pairs(
+    MerchantLocations
+) do
+
+    table.insert(
+        MerchantNames,
+        Name
+    )
+end
+
+table.sort(
+    MerchantNames
+)
+
+CreateScrollSelector(
+    TeleportCategory,
+    "MERCHANT TELEPORT",
+    MerchantNames,
+    function(Name)
+
+        TeleportToMerchant(
+            Name
+        )
+    end,
+    180
+)
+
+-- update content canvas
+local ContentLayout =
+    Instance.new("UIListLayout")
+
+ContentLayout.Parent =
+    Content
+
+ContentLayout.Padding =
+    UDim.new(0, 5)
+
+ContentLayout.SortOrder =
+    Enum.SortOrder.LayoutOrder
+
+ContentLayout:GetPropertyChangedSignal(
+    "AbsoluteContentSize"
+):Connect(function()
+
+    Content.CanvasSize =
+        UDim2.new(
+            0,
+            0,
+            0,
+            ContentLayout.AbsoluteContentSize.Y +
+            10
+        )
+end)
+
+
+-- default category 
+PlayerCategory.Visible = true
+
+PlayerButton.BackgroundColor3 =
+    COLORS.Accent
+
+PlayerButton.TextColor3 =
+    COLORS.DarkText
+
+FishingCategory.Visible = false
+TeleportCategory.Visible = false
+
+-- final initialization 
+SetWalkSpeed(16)
+SetJumpPower(16)
+
+task.defer(function()
+
+    Content.CanvasSize =
+        UDim2.new(
+            0,
+            0,
+            0,
+            ContentLayout.AbsoluteContentSize.Y +
+            10
+        )
+end)
+
+print(
+    "Complete Control UI loaded successfully."
+)
