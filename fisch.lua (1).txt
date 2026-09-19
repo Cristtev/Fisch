@@ -1,7 +1,6 @@
 --========================================================--
--- RUISHI HUB - CYBERPUNK UI
--- LocalScript
--- For an experience you own/control
+-- RUISHI HUB - CYBERPUNK UI (ADVANCED)
+-- LocalScript - Compatible with Custom/Owned Games
 -- PC + MOBILE FRIENDLY
 --========================================================--
 
@@ -19,30 +18,63 @@ local playerGui = player:WaitForChild("PlayerGui")
 --========================================================--
 
 local oldMain = playerGui:FindFirstChild("CyberpunkMovementGUI")
-if oldMain then
-	oldMain:Destroy()
-end
+if oldMain then oldMain:Destroy() end
 
 local oldIntro = playerGui:FindFirstChild("CyberpunkIntroGUI")
-if oldIntro then
-	oldIntro:Destroy()
-end
+if oldIntro then oldIntro:Destroy() end
 
 --========================================================--
--- COLORS
+-- THEME & COLORS
 --========================================================--
 
-local BG = Color3.fromRGB(15, 15, 25)
-local PANEL = Color3.fromRGB(20, 20, 35)
-local PANEL2 = Color3.fromRGB(25, 25, 40)
-local DARK = Color3.fromRGB(30, 30, 45)
-
-local CYAN = Color3.fromRGB(0, 255, 204)
-local TEXT = Color3.fromRGB(220, 220, 240)
-local MUTED = Color3.fromRGB(170, 170, 190)
+local COLORS = {
+    BG = Color3.fromRGB(12, 12, 20),
+    PANEL = Color3.fromRGB(18, 18, 28),
+    PANEL_HOVER = Color3.fromRGB(25, 28, 42),
+    PANEL_HEADER = Color3.fromRGB(22, 24, 38),
+    DARK = Color3.fromRGB(8, 8, 14),
+    CYAN = Color3.fromRGB(0, 255, 204),
+    CYAN_DIM = Color3.fromRGB(0, 150, 120),
+    TEXT = Color3.fromRGB(230, 230, 245),
+    MUTED = Color3.fromRGB(130, 130, 150),
+    ALERT = Color3.fromRGB(255, 60, 90),
+    SUCCESS = Color3.fromRGB(80, 255, 140)
+}
 
 --========================================================--
--- SCREEN GUI
+-- STATE & DATA MANAGEMENT
+--========================================================--
+
+local PlayerState = {
+    WalkSpeed = 16,
+    JumpPower = 50,
+    InfiniteJump = false,
+    HopJump = false,
+    Noclip = false,
+}
+
+local ReelState = {
+    Mode = "Normal",
+    Active = false,
+    Progress = 0,
+    Success = false,
+    Holding = false
+}
+
+-- Merchant CFrame Locations (Source Data Matrix)
+local MerchantLocations = {
+    ["Moosewood Merchant"]      = CFrame.new(465, 150, 230),
+    ["Roslit Bay Merchant"]     = CFrame.new(-1454, 133, 675),
+    ["Snowcap Island Merchant"]  = CFrame.new(2717, 157, 2374),
+    ["Sunstone Island Merchant"] = CFrame.new(-930, 130, -1105),
+    ["Forsaken Shores Merchant"] = CFrame.new(-2509, 135, 1582),
+    ["Ancient Isle Merchant"]    = CFrame.new(6080, 195, 309),
+    ["Northern Summit Merchant"] = CFrame.new(19574, 132, 5312),
+    ["Atlantis Merchant"]        = CFrame.new(-4459, -605, 1879)
+}
+
+--========================================================--
+-- ROOT SCREEN GUI
 --========================================================--
 
 local ScreenGui = Instance.new("ScreenGui")
@@ -52,7 +84,7 @@ ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = playerGui
 
 --========================================================--
--- INTRO
+-- INTRO ANIMATION
 --========================================================--
 
 local IntroGui = Instance.new("ScreenGui")
@@ -62,43 +94,35 @@ IntroGui.IgnoreGuiInset = true
 IntroGui.Parent = playerGui
 
 local IntroFrame = Instance.new("Frame")
-IntroFrame.Size = UDim2.new(0, 360, 0, 240)
-IntroFrame.Position = UDim2.new(0.5, -180, 0.5, -120)
-IntroFrame.BackgroundColor3 = BG
+IntroFrame.Size = UDim2.new(0, 380, 0, 220)
+IntroFrame.Position = UDim2.new(0.5, -190, 0.5, -110)
+IntroFrame.BackgroundColor3 = COLORS.BG
 IntroFrame.BorderSizePixel = 0
 IntroFrame.Parent = IntroGui
 
 local IntroCorner = Instance.new("UICorner")
-IntroCorner.CornerRadius = UDim.new(0, 14)
+IntroCorner.CornerRadius = UDim.new(0, 12)
 IntroCorner.Parent = IntroFrame
 
 local IntroStroke = Instance.new("UIStroke")
-IntroStroke.Color = CYAN
+IntroStroke.Color = COLORS.CYAN
 IntroStroke.Thickness = 2
 IntroStroke.Parent = IntroFrame
 
-local IntroLogo = Instance.new("ImageLabel")
-IntroLogo.Size = UDim2.new(0, 50, 0, 50)
-IntroLogo.Position = UDim2.new(0.5, -25, 0, 25)
-IntroLogo.BackgroundTransparency = 1
-IntroLogo.Image = "rbxassetid://79757823848884"
-IntroLogo.ImageColor3 = CYAN
-IntroLogo.Parent = IntroFrame
-
 local IntroTitle = Instance.new("TextLabel")
 IntroTitle.Size = UDim2.new(1, 0, 0, 30)
-IntroTitle.Position = UDim2.new(0, 0, 0, 85)
+IntroTitle.Position = UDim2.new(0, 0, 0, 40)
 IntroTitle.BackgroundTransparency = 1
 IntroTitle.Font = Enum.Font.GothamBold
-IntroTitle.Text = "RUISHI HUB | LOADING..."
-IntroTitle.TextColor3 = CYAN
-IntroTitle.TextSize = 14
+IntroTitle.Text = "RUISHI HUB // CYBER CORE"
+IntroTitle.TextColor3 = COLORS.CYAN
+IntroTitle.TextSize = 16
 IntroTitle.Parent = IntroFrame
 
 local BarBg = Instance.new("Frame")
-BarBg.Size = UDim2.new(0, 300, 0, 8)
-BarBg.Position = UDim2.new(0.5, -150, 0, 140)
-BarBg.BackgroundColor3 = DARK
+BarBg.Size = UDim2.new(0, 300, 0, 6)
+BarBg.Position = UDim2.new(0.5, -150, 0, 110)
+BarBg.BackgroundColor3 = COLORS.DARK
 BarBg.BorderSizePixel = 0
 BarBg.Parent = IntroFrame
 
@@ -108,7 +132,7 @@ BarCorner.Parent = BarBg
 
 local BarFill = Instance.new("Frame")
 BarFill.Size = UDim2.new(0, 0, 1, 0)
-BarFill.BackgroundColor3 = CYAN
+BarFill.BackgroundColor3 = COLORS.CYAN
 BarFill.BorderSizePixel = 0
 BarFill.Parent = BarBg
 
@@ -118,98 +142,34 @@ FillCorner.Parent = BarFill
 
 local StatusText = Instance.new("TextLabel")
 StatusText.Size = UDim2.new(1, 0, 0, 20)
-StatusText.Position = UDim2.new(0, 0, 0, 165)
+StatusText.Position = UDim2.new(0, 0, 0, 135)
 StatusText.BackgroundTransparency = 1
 StatusText.Font = Enum.Font.GothamMedium
-StatusText.Text = "Initializing modules..."
-StatusText.TextColor3 = MUTED
+StatusText.Text = "Initializing Subsystems..."
+StatusText.TextColor3 = COLORS.MUTED
 StatusText.TextSize = 12
 StatusText.Parent = IntroFrame
 
 task.spawn(function()
-
-	task.wait(0.3)
-
-	StatusText.Text = "Loading movement features..."
-
-	BarFill:TweenSize(
-		UDim2.new(0.6, 0, 1, 0),
-		Enum.EasingDirection.Out,
-		Enum.EasingStyle.Quad,
-		0.8,
-		true
-	)
-
-	task.wait(0.9)
-
-	StatusText.Text = "Starting UI environment..."
-
-	BarFill:TweenSize(
-		UDim2.new(1, 0, 1, 0),
-		Enum.EasingDirection.Out,
-		Enum.EasingStyle.Quad,
-		0.6,
-		true
-	)
-
-	task.wait(0.7)
-
-	StatusText.Text = "Welcome!"
-
-	task.wait(0.3)
-
-	local tweenInfo = TweenInfo.new(
-		0.5,
-		Enum.EasingStyle.Quad,
-		Enum.EasingDirection.Out
-	)
-
-	TweenService:Create(
-		IntroFrame,
-		tweenInfo,
-		{BackgroundTransparency = 1}
-	):Play()
-
-	for _, child in ipairs(IntroFrame:GetDescendants()) do
-
-		if child:IsA("TextLabel") then
-
-			TweenService:Create(
-				child,
-				tweenInfo,
-				{TextTransparency = 1}
-			):Play()
-
-		elseif child:IsA("ImageLabel") then
-
-			TweenService:Create(
-				child,
-				tweenInfo,
-				{ImageTransparency = 1}
-			):Play()
-
-		elseif child:IsA("Frame") then
-
-			TweenService:Create(
-				child,
-				tweenInfo,
-				{BackgroundTransparency = 1}
-			):Play()
-
-		elseif child:IsA("UIStroke") then
-
-			TweenService:Create(
-				child,
-				tweenInfo,
-				{Transparency = 1}
-			):Play()
-
-		end
-	end
-
-	task.wait(0.5)
-
-	IntroGui:Destroy()
+    BarFill:TweenSize(UDim2.new(0.5, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.4, true)
+    task.wait(0.4)
+    StatusText.Text = "Loading Coordinates & Reel Modules..."
+    BarFill:TweenSize(UDim2.new(1, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.4, true)
+    task.wait(0.5)
+    
+    local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    TweenService:Create(IntroFrame, tweenInfo, {BackgroundTransparency = 1}):Play()
+    for _, child in ipairs(IntroFrame:GetDescendants()) do
+        if child:IsA("TextLabel") then
+            TweenService:Create(child, tweenInfo, {TextTransparency = 1}):Play()
+        elseif child:IsA("Frame") then
+            TweenService:Create(child, tweenInfo, {BackgroundTransparency = 1}):Play()
+        elseif child:IsA("UIStroke") then
+            TweenService:Create(child, tweenInfo, {Transparency = 1}):Play()
+        end
+    end
+    task.wait(0.4)
+    IntroGui:Destroy()
 end)
 
 --========================================================--
@@ -218,23 +178,9 @@ end)
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-
--- Responsive-ish size
-MainFrame.Size = UDim2.new(
-	0,
-	320,
-	0,
-	530
-)
-
-MainFrame.Position = UDim2.new(
-	0.5,
-	-160,
-	0.5,
-	-265
-)
-
-MainFrame.BackgroundColor3 = BG
+MainFrame.Size = UDim2.new(0, 350, 0, 520)
+MainFrame.Position = UDim2.new(0.5, -175, 0.5, -260)
+MainFrame.BackgroundColor3 = COLORS.BG
 MainFrame.BorderSizePixel = 0
 MainFrame.ClipsDescendants = true
 MainFrame.Parent = ScreenGui
@@ -244,7 +190,7 @@ MainCorner.CornerRadius = UDim.new(0, 12)
 MainCorner.Parent = MainFrame
 
 local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = CYAN
+MainStroke.Color = COLORS.CYAN
 MainStroke.Thickness = 2
 MainStroke.Parent = MainFrame
 
@@ -254,31 +200,30 @@ MainStroke.Parent = MainFrame
 
 local TopBar = Instance.new("Frame")
 TopBar.Name = "TopBar"
-TopBar.Size = UDim2.new(1, 0, 0, 40)
-TopBar.BackgroundColor3 = PANEL2
+TopBar.Size = UDim2.new(1, 0, 0, 42)
+TopBar.BackgroundColor3 = COLORS.PANEL_HEADER
 TopBar.BorderSizePixel = 0
 TopBar.Parent = MainFrame
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Size = UDim2.new(1, -90, 1, 0)
+TitleLabel.Size = UDim2.new(1, -50, 1, 0)
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.Text = "Ruishi Hub"
-TitleLabel.TextColor3 = CYAN
+TitleLabel.Text = "RUISHI HUB  //  v2.0"
+TitleLabel.TextColor3 = COLORS.CYAN
 TitleLabel.TextSize = 13
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Parent = TopBar
 
--- MINIMIZE / CLOSE BUTTON
 local CloseButton = Instance.new("TextButton")
 CloseButton.Name = "CloseButton"
 CloseButton.Size = UDim2.new(0, 28, 0, 28)
-CloseButton.Position = UDim2.new(1, -34, 0, 6)
-CloseButton.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+CloseButton.Position = UDim2.new(1, -34, 0, 7)
+CloseButton.BackgroundColor3 = Color3.fromRGB(35, 20, 30)
 CloseButton.Font = Enum.Font.GothamBold
 CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+CloseButton.TextColor3 = COLORS.ALERT
 CloseButton.TextSize = 13
 CloseButton.AutoButtonColor = false
 CloseButton.Parent = TopBar
@@ -288,153 +233,98 @@ CloseCorner.CornerRadius = UDim.new(0, 6)
 CloseCorner.Parent = CloseButton
 
 --========================================================--
--- CATEGORY BAR
+-- CATEGORY NAVIGATION
 --========================================================--
 
 local CategoryBar = Instance.new("Frame")
 CategoryBar.Name = "CategoryBar"
-CategoryBar.Size = UDim2.new(1, -10, 0, 42)
-CategoryBar.Position = UDim2.new(0, 5, 0, 45)
+CategoryBar.Size = UDim2.new(1, -20, 0, 36)
+CategoryBar.Position = UDim2.new(0, 10, 0, 50)
 CategoryBar.BackgroundTransparency = 1
 CategoryBar.Parent = MainFrame
 
 local CategoryLayout = Instance.new("UIListLayout")
 CategoryLayout.FillDirection = Enum.FillDirection.Horizontal
 CategoryLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-CategoryLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-CategoryLayout.Padding = UDim.new(0, 5)
+CategoryLayout.Padding = UDim.new(0, 6)
 CategoryLayout.Parent = CategoryBar
-
---========================================================--
--- CATEGORY CONTENT HOLDER
---========================================================--
 
 local ContentHolder = Instance.new("Frame")
 ContentHolder.Name = "ContentHolder"
-ContentHolder.Size = UDim2.new(1, -10, 1, -92)
-ContentHolder.Position = UDim2.new(0, 5, 0, 87)
+ContentHolder.Size = UDim2.new(1, -20, 1, -100)
+ContentHolder.Position = UDim2.new(0, 10, 0, 92)
 ContentHolder.BackgroundTransparency = 1
 ContentHolder.Parent = MainFrame
-
---========================================================--
--- CATEGORY CREATOR
---========================================================--
 
 local Categories = {}
 local CategoryButtons = {}
 
 local function CreateCategory(name)
+    local Frame = Instance.new("ScrollingFrame")
+    Frame.Name = name .. "Category"
+    Frame.Size = UDim2.new(1, 0, 1, 0)
+    Frame.BackgroundTransparency = 1
+    Frame.BorderSizePixel = 0
+    Frame.ScrollBarThickness = 3
+    Frame.ScrollBarImageColor3 = COLORS.CYAN
+    Frame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    Frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    Frame.Visible = false
+    Frame.Parent = ContentHolder
 
-	local Frame = Instance.new("ScrollingFrame")
+    local Padding = Instance.new("UIPadding")
+    Padding.PaddingTop = UDim.new(0, 4)
+    Padding.PaddingBottom = UDim.new(0, 12)
+    Padding.PaddingLeft = UDim.new(0, 2)
+    Padding.PaddingRight = UDim.new(0, 6)
+    Padding.Parent = Frame
 
-	Frame.Name = name .. "Category"
-	Frame.Size = UDim2.new(1, 0, 1, 0)
+    local Layout = Instance.new("UIListLayout")
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    Layout.Padding = UDim.new(0, 8)
+    Layout.Parent = Frame
 
-	Frame.BackgroundTransparency = 1
-	Frame.BorderSizePixel = 0
-
-	Frame.ScrollBarThickness = 4
-	Frame.ScrollBarImageColor3 = CYAN
-
-	Frame.CanvasSize = UDim2.new(0, 0, 0, 0)
-
-	Frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-
-	Frame.Visible = false
-
-	Frame.Parent = ContentHolder
-
-	local Padding = Instance.new("UIPadding")
-	Padding.PaddingTop = UDim.new(0, 5)
-	Padding.PaddingBottom = UDim.new(0, 15)
-	Padding.PaddingLeft = UDim.new(0, 5)
-	Padding.PaddingRight = UDim.new(0, 5)
-	Padding.Parent = Frame
-
-	local Layout = Instance.new("UIListLayout")
-
-	Layout.SortOrder = Enum.SortOrder.LayoutOrder
-	Layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	Layout.Padding = UDim.new(0, 10)
-
-	Layout.Parent = Frame
-
-	Categories[name] = Frame
-
-	return Frame
+    Categories[name] = Frame
+    return Frame
 end
 
---========================================================--
--- CATEGORY BUTTON
---========================================================--
-
-local CurrentCategory = nil
-
 local function ShowCategory(name)
-
-	for categoryName, frame in pairs(Categories) do
-
-		frame.Visible = (categoryName == name)
-
-	end
-
-	for buttonName, button in pairs(CategoryButtons) do
-
-		if buttonName == name then
-
-			button.BackgroundColor3 = CYAN
-			button.TextColor3 = BG
-
-		else
-
-			button.BackgroundColor3 = PANEL2
-			button.TextColor3 = TEXT
-
-		end
-
-	end
-
-	CurrentCategory = name
+    for categoryName, frame in pairs(Categories) do
+        frame.Visible = (categoryName == name)
+    end
+    for buttonName, button in pairs(CategoryButtons) do
+        if buttonName == name then
+            button.BackgroundColor3 = COLORS.CYAN
+            button.TextColor3 = COLORS.DARK
+        else
+            button.BackgroundColor3 = COLORS.PANEL
+            button.TextColor3 = COLORS.TEXT
+        end
+    end
 end
 
 local function CreateCategoryButton(name)
+    local Button = Instance.new("TextButton")
+    Button.Name = name .. "Button"
+    Button.Size = UDim2.new(0, 100, 0, 32)
+    Button.BackgroundColor3 = COLORS.PANEL
+    Button.BorderSizePixel = 0
+    Button.Text = name:upper()
+    Button.TextColor3 = COLORS.TEXT
+    Button.TextSize = 11
+    Button.Font = Enum.Font.GothamBold
+    Button.AutoButtonColor = false
+    Button.Parent = CategoryBar
 
-	local Button = Instance.new("TextButton")
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent = Button
 
-	Button.Name = name .. "Button"
-
-	Button.Size = UDim2.new(0, 90, 0, 32)
-
-	Button.BackgroundColor3 = PANEL2
-	Button.BorderSizePixel = 0
-
-	Button.Text = name
-	Button.TextColor3 = TEXT
-	Button.TextSize = 11
-	Button.Font = Enum.Font.GothamBold
-
-	Button.AutoButtonColor = false
-
-	Button.Parent = CategoryBar
-
-	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0, 7)
-	Corner.Parent = Button
-
-	CategoryButtons[name] = Button
-
-	Button.MouseButton1Click:Connect(function()
-
-		ShowCategory(name)
-
-	end)
-
-	return Button
+    CategoryButtons[name] = Button
+    Button.MouseButton1Click:Connect(function() ShowCategory(name) end)
+    return Button
 end
-
---========================================================--
--- CREATE CATEGORIES
---========================================================--
 
 local PlayerCategory = CreateCategory("Player")
 local FishingCategory = CreateCategory("Fishing")
@@ -445,857 +335,506 @@ CreateCategoryButton("Fishing")
 CreateCategoryButton("Teleport")
 
 --========================================================--
--- UI HELPERS
+-- COMPONENT BUILDERS (UI HELPERS)
 --========================================================--
 
 local function CreateSlider(parent, name, min, default, max, callback)
+    local Container = Instance.new("Frame")
+    Container.Size = UDim2.new(1, 0, 0, 55)
+    Container.BackgroundColor3 = COLORS.PANEL
+    Container.BorderSizePixel = 0
+    Container.Parent = parent
 
-	local Container = Instance.new("Frame")
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent = Container
 
-	Container.Size = UDim2.new(1, -10, 0, 60)
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -20, 0, 20)
+    Label.Position = UDim2.new(0, 10, 0, 6)
+    Label.BackgroundTransparency = 1
+    Label.Font = Enum.Font.GothamSemibold
+    Label.Text = name .. ": " .. default
+    Label.TextColor3 = COLORS.TEXT
+    Label.TextSize = 11
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = Container
 
-	Container.BackgroundTransparency = 1
+    local SliderBg = Instance.new("Frame")
+    SliderBg.Size = UDim2.new(1, -20, 0, 6)
+    SliderBg.Position = UDim2.new(0, 10, 0, 34)
+    SliderBg.BackgroundColor3 = COLORS.DARK
+    SliderBg.BorderSizePixel = 0
+    SliderBg.Parent = Container
 
-	Container.Parent = parent
+    local BgCorner = Instance.new("UICorner")
+    BgCorner.CornerRadius = UDim.new(1, 0)
+    BgCorner.Parent = SliderBg
 
-	local Label = Instance.new("TextLabel")
+    local percentage = (default - min) / (max - min)
+    local SliderFill = Instance.new("Frame")
+    SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
+    SliderFill.BackgroundColor3 = COLORS.CYAN
+    SliderFill.BorderSizePixel = 0
+    SliderFill.Parent = SliderBg
 
-	Label.Size = UDim2.new(1, 0, 0, 20)
+    local FillCorner = Instance.new("UICorner")
+    FillCorner.CornerRadius = UDim.new(1, 0)
+    FillCorner.Parent = SliderFill
 
-	Label.BackgroundTransparency = 1
+    local dragging = false
+    local function SetValueFromX(x)
+        local alpha = math.clamp((x - SliderBg.AbsolutePosition.X) / SliderBg.AbsoluteSize.X, 0, 1)
+        SliderFill.Size = UDim2.new(alpha, 0, 1, 0)
+        local value = math.floor(min + ((max - min) * alpha))
+        Label.Text = name .. ": " .. value
+        callback(value)
+    end
 
-	Label.Font = Enum.Font.GothamSemibold
+    SliderBg.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            SetValueFromX(input.Position.X)
+        end
+    end)
 
-	Label.Text = name .. ": " .. default
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            SetValueFromX(input.Position.X)
+        end
+    end)
 
-	Label.TextColor3 = TEXT
-
-	Label.TextSize = 13
-
-	Label.TextXAlignment = Enum.TextXAlignment.Left
-
-	Label.Parent = Container
-
-	local SliderBg = Instance.new("Frame")
-
-	SliderBg.Size = UDim2.new(1, 0, 0, 8)
-
-	SliderBg.Position = UDim2.new(0, 0, 0, 32)
-
-	SliderBg.BackgroundColor3 = DARK
-
-	SliderBg.BorderSizePixel = 0
-
-	SliderBg.Parent = Container
-
-	local BgCorner = Instance.new("UICorner")
-	BgCorner.CornerRadius = UDim.new(1, 0)
-	BgCorner.Parent = SliderBg
-
-	local percentage =
-		(default - min) /
-		(max - min)
-
-	local SliderFill = Instance.new("Frame")
-
-	SliderFill.Size =
-		UDim2.new(percentage, 0, 1, 0)
-
-	SliderFill.BackgroundColor3 = CYAN
-
-	SliderFill.BorderSizePixel = 0
-
-	SliderFill.Parent = SliderBg
-
-	local FillCorner = Instance.new("UICorner")
-	FillCorner.CornerRadius = UDim.new(1, 0)
-	FillCorner.Parent = SliderFill
-
-	local dragging = false
-
-	local function SetValueFromX(x)
-
-		local alpha = math.clamp(
-			(x - SliderBg.AbsolutePosition.X) /
-			SliderBg.AbsoluteSize.X,
-			0,
-			1
-		)
-
-		SliderFill.Size =
-			UDim2.new(alpha, 0, 1, 0)
-
-		local value =
-			math.floor(
-				min +
-				((max - min) * alpha)
-			)
-
-		Label.Text =
-			name .. ": " .. value
-
-		callback(value)
-
-	end
-
-	SliderBg.InputBegan:Connect(function(input)
-
-		if input.UserInputType ==
-			Enum.UserInputType.MouseButton1
-			or
-			input.UserInputType ==
-			Enum.UserInputType.Touch
-		then
-
-			dragging = true
-
-			SetValueFromX(input.Position.X)
-
-		end
-
-	end)
-
-	UserInputService.InputChanged:Connect(function(input)
-
-		if not dragging then
-			return
-		end
-
-		if input.UserInputType ==
-			Enum.UserInputType.MouseMovement
-			or
-			input.UserInputType ==
-			Enum.UserInputType.Touch
-		then
-
-			SetValueFromX(input.Position.X)
-
-		end
-
-	end)
-
-	UserInputService.InputEnded:Connect(function(input)
-
-		if input.UserInputType ==
-			Enum.UserInputType.MouseButton1
-			or
-			input.UserInputType ==
-			Enum.UserInputType.Touch
-		then
-
-			dragging = false
-
-		end
-
-	end)
-
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
 end
-
---========================================================--
--- TOGGLE
---========================================================--
 
 local function CreateToggle(parent, name, callback)
+    local Container = Instance.new("Frame")
+    Container.Size = UDim2.new(1, 0, 0, 40)
+    Container.BackgroundColor3 = COLORS.PANEL
+    Container.BorderSizePixel = 0
+    Container.Parent = parent
 
-	local Container = Instance.new("Frame")
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent = Container
 
-	Container.Size = UDim2.new(1, -10, 0, 42)
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -60, 1, 0)
+    Label.Position = UDim2.new(0, 10, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Font = Enum.Font.GothamMedium
+    Label.Text = name
+    Label.TextColor3 = COLORS.TEXT
+    Label.TextSize = 11
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.Parent = Container
 
-	Container.BackgroundColor3 = PANEL
+    local Toggle = Instance.new("TextButton")
+    Toggle.Size = UDim2.new(0, 38, 0, 20)
+    Toggle.Position = UDim2.new(1, -48, 0.5, -10)
+    Toggle.BackgroundColor3 = COLORS.DARK
+    Toggle.Text = ""
+    Toggle.AutoButtonColor = false
+    Toggle.Parent = Container
 
-	Container.BorderSizePixel = 0
+    local ToggleCorner = Instance.new("UICorner")
+    ToggleCorner.CornerRadius = UDim.new(1, 0)
+    ToggleCorner.Parent = Toggle
 
-	Container.Parent = parent
+    local Circle = Instance.new("Frame")
+    Circle.Size = UDim2.new(0, 14, 0, 14)
+    Circle.Position = UDim2.new(0, 3, 0.5, -7)
+    Circle.BackgroundColor3 = COLORS.MUTED
+    Circle.BorderSizePixel = 0
+    Circle.Parent = Toggle
 
-	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0, 8)
-	Corner.Parent = Container
+    local CircleCorner = Instance.new("UICorner")
+    CircleCorner.CornerRadius = UDim.new(1, 0)
+    CircleCorner.Parent = Circle
 
-	local Label = Instance.new("TextLabel")
+    local enabled = false
+    local function Set(state)
+        enabled = state
+        if enabled then
+            Toggle.BackgroundColor3 = COLORS.CYAN
+            Circle.BackgroundColor3 = COLORS.BG
+            Circle:TweenPosition(UDim2.new(1, -17, 0.5, -7), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+        else
+            Toggle.BackgroundColor3 = COLORS.DARK
+            Circle.BackgroundColor3 = COLORS.MUTED
+            Circle:TweenPosition(UDim2.new(0, 3, 0.5, -7), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+        end
+        callback(enabled)
+    end
 
-	Label.Size = UDim2.new(1, -65, 1, 0)
-
-	Label.Position = UDim2.new(0, 12, 0, 0)
-
-	Label.BackgroundTransparency = 1
-
-	Label.Font = Enum.Font.GothamMedium
-
-	Label.Text = name
-
-	Label.TextColor3 = TEXT
-
-	Label.TextSize = 13
-
-	Label.TextXAlignment = Enum.TextXAlignment.Left
-
-	Label.Parent = Container
-
-	local Toggle = Instance.new("TextButton")
-
-	Toggle.Size = UDim2.new(0, 42, 0, 22)
-
-	Toggle.Position = UDim2.new(1, -52, 0.5, -11)
-
-	Toggle.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-
-	Toggle.Text = ""
-
-	Toggle.AutoButtonColor = false
-
-	Toggle.Parent = Container
-
-	local ToggleCorner = Instance.new("UICorner")
-	ToggleCorner.CornerRadius = UDim.new(1, 0)
-	ToggleCorner.Parent = Toggle
-
-	local Circle = Instance.new("Frame")
-
-	Circle.Size = UDim2.new(0, 16, 0, 16)
-
-	Circle.Position = UDim2.new(0, 3, 0.5, -8)
-
-	Circle.BackgroundColor3 =
-		Color3.fromRGB(200, 200, 200)
-
-	Circle.BorderSizePixel = 0
-
-	Circle.Parent = Toggle
-
-	local CircleCorner = Instance.new("UICorner")
-	CircleCorner.CornerRadius = UDim.new(1, 0)
-	CircleCorner.Parent = Circle
-
-	local enabled = false
-
-	local function Set(state)
-
-		enabled = state
-
-		if enabled then
-
-			Toggle.BackgroundColor3 = CYAN
-
-			Circle.BackgroundColor3 = BG
-
-			Circle:TweenPosition(
-				UDim2.new(1, -19, 0.5, -8),
-				Enum.EasingDirection.Out,
-				Enum.EasingStyle.Quad,
-				0.15,
-				true
-			)
-
-		else
-
-			Toggle.BackgroundColor3 =
-				Color3.fromRGB(40, 40, 60)
-
-			Circle.BackgroundColor3 =
-				Color3.fromRGB(200, 200, 200)
-
-			Circle:TweenPosition(
-				UDim2.new(0, 3, 0.5, -8),
-				Enum.EasingDirection.Out,
-				Enum.EasingStyle.Quad,
-				0.15,
-				true
-			)
-
-		end
-
-		callback(enabled)
-
-	end
-
-	Toggle.MouseButton1Click:Connect(function()
-
-		Set(not enabled)
-
-	end)
-
-	return {
-		Set = Set,
-		Get = function()
-			return enabled
-		end
-	}
-
+    Toggle.MouseButton1Click:Connect(function() Set(not enabled) end)
 end
-
---========================================================--
--- BUTTON
---========================================================--
 
 local function CreateButton(parent, text)
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(1, 0, 0, 38)
+    Button.BackgroundColor3 = COLORS.PANEL
+    Button.BorderSizePixel = 0
+    Button.Font = Enum.Font.GothamBold
+    Button.Text = text
+    Button.TextColor3 = COLORS.TEXT
+    Button.TextSize = 11
+    Button.AutoButtonColor = false
+    Button.Parent = parent
 
-	local Button = Instance.new("TextButton")
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 6)
+    Corner.Parent = Button
 
-	Button.Size = UDim2.new(1, -10, 0, 42)
-
-	Button.BackgroundColor3 = PANEL
-
-	Button.BorderSizePixel = 0
-
-	Button.Font = Enum.Font.GothamBold
-
-	Button.Text = text
-
-	Button.TextColor3 = TEXT
-
-	Button.TextSize = 13
-
-	Button.AutoButtonColor = false
-
-	Button.Parent = parent
-
-	local Corner = Instance.new("UICorner")
-	Corner.CornerRadius = UDim.new(0, 8)
-	Corner.Parent = Button
-
-	Button.MouseEnter:Connect(function()
-
-		Button.BackgroundColor3 =
-			Color3.fromRGB(30, 45, 50)
-
-	end)
-
-	Button.MouseLeave:Connect(function()
-
-		Button.BackgroundColor3 = PANEL
-
-	end)
-
-	return Button
-
+    Button.MouseEnter:Connect(function() Button.BackgroundColor3 = COLORS.PANEL_HOVER end)
+    Button.MouseLeave:Connect(function() Button.BackgroundColor3 = COLORS.PANEL end)
+    return Button
 end
 
 --========================================================--
--- PLAYER VARIABLES
+-- PLAYER FEATURES
 --========================================================--
 
-local currentSpeed = 16
-local currentJump = 50
+CreateSlider(PlayerCategory, "WALKSPEED", 16, 16, 300, function(v)
+    PlayerState.WalkSpeed = v
+    local char = player.Character
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        char:FindFirstChildOfClass("Humanoid").WalkSpeed = v
+    end
+end)
 
-local infJumpEnabled = false
-local hopJumpEnabled = false
-local noclipEnabled = false
+CreateSlider(PlayerCategory, "JUMP POWER", 50, 50, 300, function(v)
+    PlayerState.JumpPower = v
+    local char = player.Character
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        local hum = char:FindFirstChildOfClass("Humanoid")
+        hum.UseJumpPower = true
+        hum.JumpPower = v
+    end
+end)
 
---========================================================--
--- PLAYER CATEGORY
---========================================================--
+CreateToggle(PlayerCategory, "INFINITE JUMP", function(state)
+    PlayerState.InfiniteJump = state
+end)
 
-CreateSlider(
-	PlayerCategory,
-	"WalkSpeed",
-	16,
-	16,
-	500,
-	function(value)
+CreateToggle(PlayerCategory, "HOP JUMP", function(state)
+    PlayerState.HopJump = state
+end)
 
-		currentSpeed = value
-
-		local char = player.Character
-
-		if char then
-
-			local hum =
-				char:FindFirstChildOfClass("Humanoid")
-
-			if hum then
-				hum.WalkSpeed = value
-			end
-
-		end
-
-	end
-)
-
-CreateSlider(
-	PlayerCategory,
-	"JumpPower",
-	16,
-	50,
-	500,
-	function(value)
-
-		currentJump = value
-
-		local char = player.Character
-
-		if char then
-
-			local hum =
-				char:FindFirstChildOfClass("Humanoid")
-
-			if hum then
-
-				hum.UseJumpPower = true
-				hum.JumpPower = value
-
-			end
-
-		end
-
-	end
-)
-
-CreateToggle(
-	PlayerCategory,
-	"Infinite Jump",
-	function(state)
-
-		infJumpEnabled = state
-
-	end
-)
-
-CreateToggle(
-	PlayerCategory,
-	"Hop Jump",
-	function(state)
-
-		hopJumpEnabled = state
-
-	end
-)
-
-CreateToggle(
-	PlayerCategory,
-	"Noclip",
-	function(state)
-
-		noclipEnabled = state
-
-	end
-)
-
---========================================================--
--- FISHING CATEGORY
---========================================================--
-
-local SelectedReelMode = "Normal"
-
-local ReelStatus = Instance.new("TextLabel")
-
-ReelStatus.Size =
-	UDim2.new(1, -10, 0, 35)
-
-ReelStatus.BackgroundColor3 = PANEL
-
-ReelStatus.BorderSizePixel = 0
-
-ReelStatus.Font = Enum.Font.GothamMedium
-
-ReelStatus.Text =
-	"Reel Mode: Normal"
-
-ReelStatus.TextColor3 = CYAN
-
-ReelStatus.TextSize = 13
-
-ReelStatus.Parent = FishingCategory
-
-local ReelCorner = Instance.new("UICorner")
-ReelCorner.CornerRadius = UDim.new(0, 8)
-ReelCorner.Parent = ReelStatus
-
-local function CreateReelButton(text, mode)
-
-	local Button =
-		CreateButton(
-			FishingCategory,
-			text
-		)
-
-	Button.MouseButton1Click:Connect(function()
-
-		SelectedReelMode = mode
-
-		ReelStatus.Text =
-			"Reel Mode: " .. mode
-
-	end)
-
-end
-
-CreateReelButton("NORMAL REEL", "Normal")
-CreateReelButton("LEGIT REEL", "Legit")
-CreateReelButton("INSTANT REEL", "Instant")
-
-local ReelButton =
-	CreateButton(
-		FishingCategory,
-		"START REEL"
-	)
-
-ReelButton.MouseButton1Click:Connect(function()
-
-	if SelectedReelMode == "Normal" then
-
-		ReelStatus.Text =
-			"Reel Mode: Normal | Active"
-
-	elseif SelectedReelMode == "Legit" then
-
-		ReelStatus.Text =
-			"Reel Mode: Legit | Active"
-
-	elseif SelectedReelMode == "Instant" then
-
-		ReelStatus.Text =
-			"Reel Mode: Instant | Active"
-
-	end
-
+CreateToggle(PlayerCategory, "NOCLIP", function(state)
+    PlayerState.Noclip = state
 end)
 
 --========================================================--
--- TELEPORT CATEGORY
+-- REEL LOGIC & FISHING FEATURES
 --========================================================--
 
-local SelectedDestination = nil
+local ReelDisplay = Instance.new("Frame")
+ReelDisplay.Size = UDim2.new(1, 0, 0, 50)
+ReelDisplay.BackgroundColor3 = COLORS.PANEL
+ReelDisplay.BorderSizePixel = 0
+ReelDisplay.Parent = FishingCategory
 
-local DestinationStatus = Instance.new("TextLabel")
+local ReelDisplayCorner = Instance.new("UICorner")
+ReelDisplayCorner.CornerRadius = UDim.new(0, 6)
+ReelDisplayCorner.Parent = ReelDisplay
 
-DestinationStatus.Size =
-	UDim2.new(1, -10, 0, 35)
+local StatusLabel = Instance.new("TextLabel")
+StatusLabel.Size = UDim2.new(1, -20, 0, 20)
+StatusLabel.Position = UDim2.new(0, 10, 0, 5)
+StatusLabel.BackgroundTransparency = 1
+StatusLabel.Font = Enum.Font.GothamBold
+StatusLabel.Text = "STATUS: IDLE | MODE: NORMAL"
+StatusLabel.TextColor3 = COLORS.CYAN
+StatusLabel.TextSize = 10
+StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
+StatusLabel.Parent = ReelDisplay
 
-DestinationStatus.BackgroundColor3 = PANEL
+local ProgressBarBg = Instance.new("Frame")
+ProgressBarBg.Size = UDim2.new(1, -20, 0, 8)
+ProgressBarBg.Position = UDim2.new(0, 10, 0, 30)
+ProgressBarBg.BackgroundColor3 = COLORS.DARK
+ProgressBarBg.BorderSizePixel = 0
+ProgressBarBg.Parent = ReelDisplay
 
-DestinationStatus.BorderSizePixel = 0
+local ProgressBarFill = Instance.new("Frame")
+ProgressBarFill.Size = UDim2.new(0, 0, 1, 0)
+ProgressBarFill.BackgroundColor3 = COLORS.CYAN
+ProgressBarFill.BorderSizePixel = 0
+ProgressBarFill.Parent = ProgressBarBg
 
-DestinationStatus.Font = Enum.Font.GothamMedium
+local function StartReel()
+    if ReelState.Active then return end
+    ReelState.Active = true
+    ReelState.Progress = 0
+    ReelState.Success = false
 
-DestinationStatus.Text =
-	"Destination: None"
-
-DestinationStatus.TextColor3 = CYAN
-
-DestinationStatus.TextSize = 12
-
-DestinationStatus.Parent = TeleportCategory
-
-local DestinationCorner = Instance.new("UICorner")
-DestinationCorner.CornerRadius = UDim.new(0, 8)
-DestinationCorner.Parent = DestinationStatus
-
--- Example destinations for YOUR OWN EXPERIENCE
-local Destinations = {
-	"Spawn",
-	"Area 1",
-	"Area 2",
-	"Shop",
-	"Arena"
-}
-
-for _, destination in ipairs(Destinations) do
-
-	local Button =
-		CreateButton(
-			TeleportCategory,
-			destination
-		)
-
-	Button.MouseButton1Click:Connect(function()
-
-		SelectedDestination = destination
-
-		DestinationStatus.Text =
-			"Destination: " ..
-			destination
-
-	end)
-
+    if ReelState.Mode == "Instant" then
+        ReelState.Progress = 1
+        ReelState.Success = true
+        ReelState.Active = false
+    end
 end
 
-local TeleportButton =
-	CreateButton(
-		TeleportCategory,
-		"TELEPORT TO SELECTED"
-	)
+local function FinishReel(success)
+    ReelState.Active = false
+    ReelState.Progress = success and 1 or 0
+    ReelState.Success = success
+end
 
-TeleportButton.MouseButton1Click:Connect(function()
+local function UpdateReel(deltaTime)
+    if not ReelState.Active then return end
 
-	if not SelectedDestination then
-		DestinationStatus.Text =
-			"Destination: None"
-		return
-	end
+    if ReelState.Mode == "Normal" then
+        if ReelState.Holding then
+            ReelState.Progress = ReelState.Progress + (deltaTime * 0.35)
+        else
+            ReelState.Progress = ReelState.Progress - (deltaTime * 0.12)
+        end
+    elseif ReelState.Mode == "Legit" then
+        if ReelState.Holding then
+            ReelState.Progress = ReelState.Progress + (deltaTime * 0.42)
+        else
+            ReelState.Progress = ReelState.Progress - (deltaTime * 0.07)
+        end
+    end
 
-	-- Put your own experience's
-	-- destination CFrames here.
-	--
-	-- Example:
-	--
-	-- player.Character.HumanoidRootPart.CFrame =
-	--     workspace.SpawnLocation.CFrame + Vector3.new(0, 3, 0)
+    ReelState.Progress = math.clamp(ReelState.Progress, 0, 1)
 
-	DestinationStatus.Text =
-		"Selected: " ..
-		SelectedDestination
+    if ReelState.Progress >= 1 then
+        FinishReel(true)
+    elseif ReelState.Progress <= 0 and not ReelState.Holding then
+        FinishReel(false)
+    end
+end
 
+RunService.RenderStepped:Connect(function(deltaTime)
+    UpdateReel(deltaTime)
+    ProgressBarFill.Size = UDim2.new(ReelState.Progress, 0, 1, 0)
+
+    if ReelState.Active then
+        StatusLabel.Text = string.format("REELING... (%d%%) | MODE: %s", math.floor(ReelState.Progress * 100), ReelState.Mode:upper())
+        StatusLabel.TextColor3 = COLORS.CYAN
+    elseif ReelState.Success then
+        StatusLabel.Text = "REEL COMPLETE // SUCCESS"
+        StatusLabel.TextColor3 = COLORS.SUCCESS
+    else
+        StatusLabel.Text = string.format("STATUS: READY | MODE: %s", ReelState.Mode:upper())
+        StatusLabel.TextColor3 = COLORS.MUTED
+    end
+end)
+
+local function AddModeButton(name, mode)
+    local btn = CreateButton(FishingCategory, "MODE: " .. name:upper())
+    btn.MouseButton1Click:Connect(function()
+        ReelState.Mode = mode
+    end)
+end
+
+AddModeButton("Normal Reel", "Normal")
+AddModeButton("Legit Reel", "Legit")
+AddModeButton("Instant Reel", "Instant")
+
+local ActionReelButton = CreateButton(FishingCategory, "ENGAGE REEL (HOLD SPACE / TAP)")
+ActionReelButton.MouseButton1Down:Connect(function()
+    ReelState.Holding = true
+    if not ReelState.Active then StartReel() end
+end)
+ActionReelButton.MouseButton1Up:Connect(function()
+    ReelState.Holding = false
+end)
+
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.Space then
+        ReelState.Holding = true
+        if not ReelState.Active then StartReel() end
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Space then
+        ReelState.Holding = false
+    end
 end)
 
 --========================================================--
--- SHOW PLAYER CATEGORY FIRST
+-- TELEPORTATION & MERCHANT COORDINATES
+--========================================================--
+
+local SelectedMerchantName = nil
+local SelectedMerchantCFrame = nil
+
+local TeleportStatus = Instance.new("TextLabel")
+TeleportStatus.Size = UDim2.new(1, 0, 0, 36)
+TeleportStatus.BackgroundColor3 = COLORS.PANEL
+TeleportStatus.BorderSizePixel = 0
+TeleportStatus.Font = Enum.Font.GothamMedium
+TeleportStatus.Text = "TARGET: NONE SELECTED"
+TeleportStatus.TextColor3 = COLORS.MUTED
+TeleportStatus.TextSize = 10
+TeleportStatus.Parent = TeleportCategory
+
+local TeleportStatusCorner = Instance.new("UICorner")
+TeleportStatusCorner.CornerRadius = UDim.new(0, 6)
+TeleportStatusCorner.Parent = TeleportStatus
+
+local function SafeTeleport(targetCFrame)
+    local character = player.Character
+    if not character then return end
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    -- Safe arrival calculation: Offset 50 studs back along LookVector to avoid NPC overlap
+    local safeOffset = targetCFrame.LookVector * -50 + Vector3.new(0, 3, 0)
+    local destination = targetCFrame + safeOffset
+
+    root.CFrame = destination
+end
+
+local SortedMerchantKeys = {}
+for name in pairs(MerchantLocations) do
+    table.insert(SortedMerchantKeys, name)
+end
+table.sort(SortedMerchantKeys)
+
+for _, name in ipairs(SortedMerchantKeys) do
+    local cframe = MerchantLocations[name]
+    local btn = CreateButton(TeleportCategory, name)
+    btn.MouseButton1Click:Connect(function()
+        SelectedMerchantName = name
+        SelectedMerchantCFrame = cframe
+        TeleportStatus.Text = "TARGET: " .. name:upper()
+        TeleportStatus.TextColor3 = COLORS.CYAN
+    end)
+end
+
+local ExecuteTPButton = CreateButton(TeleportCategory, "EXECUTE TELEPORT (SAFE 50 STUD OFFSET)")
+ExecuteTPButton.BackgroundColor3 = COLORS.PANEL_HOVER
+ExecuteTPButton.MouseButton1Click:Connect(function()
+    if SelectedMerchantCFrame then
+        SafeTeleport(SelectedMerchantCFrame)
+    else
+        TeleportStatus.Text = "ERROR: SELECT TARGET FIRST"
+        TeleportStatus.TextColor3 = COLORS.ALERT
+    end
+end)
+
+--========================================================--
+-- INITIALIZE DISPLAY
 --========================================================--
 
 ShowCategory("Player")
 
 --========================================================--
--- CHARACTER HANDLING
+-- ENGINE FRAMEWORK CONNECTIONS
 --========================================================--
 
 player.CharacterAdded:Connect(function(character)
-
-	task.wait(0.5)
-
-	local humanoid =
-		character:WaitForChild("Humanoid")
-
-	humanoid.WalkSpeed = currentSpeed
-
-	humanoid.UseJumpPower = true
-
-	humanoid.JumpPower = currentJump
-
+    task.wait(0.5)
+    local humanoid = character:WaitForChild("Humanoid", 5)
+    if humanoid then
+        humanoid.WalkSpeed = PlayerState.WalkSpeed
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = PlayerState.JumpPower
+    end
 end)
-
---========================================================--
--- INFINITE JUMP
---========================================================--
 
 UserInputService.JumpRequest:Connect(function()
-
-	if not infJumpEnabled then
-		return
-	end
-
-	local character =
-		player.Character
-
-	if not character then
-		return
-	end
-
-	local humanoid =
-		character:FindFirstChildOfClass("Humanoid")
-
-	if humanoid then
-
-		humanoid:ChangeState(
-			Enum.HumanoidStateType.Jumping
-		)
-
-	end
-
+    if not PlayerState.InfiniteJump then return end
+    local character = player.Character
+    if character and character:FindFirstChildOfClass("Humanoid") then
+        character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+    end
 end)
-
---========================================================--
--- MOVEMENT LOOP
---========================================================--
 
 RunService.RenderStepped:Connect(function()
+    local character = player.Character
+    if not character then return end
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid then return end
 
-	local character =
-		player.Character
+    if humanoid.WalkSpeed ~= PlayerState.WalkSpeed then
+        humanoid.WalkSpeed = PlayerState.WalkSpeed
+    end
 
-	if not character then
-		return
-	end
+    humanoid.UseJumpPower = true
+    if humanoid.JumpPower ~= PlayerState.JumpPower then
+        humanoid.JumpPower = PlayerState.JumpPower
+    end
 
-	local humanoid =
-		character:FindFirstChildOfClass("Humanoid")
+    if PlayerState.HopJump and humanoid.FloorMaterial ~= Enum.Material.Air then
+        humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+    end
 
-	if not humanoid then
-		return
-	end
-
-	local root =
-		character:FindFirstChild(
-			"HumanoidRootPart"
-		)
-
-	-- Keep values applied
-	if humanoid.WalkSpeed ~= currentSpeed then
-		humanoid.WalkSpeed = currentSpeed
-	end
-
-	humanoid.UseJumpPower = true
-
-	if humanoid.JumpPower ~= currentJump then
-		humanoid.JumpPower = currentJump
-	end
-
-	-- Hop
-	if hopJumpEnabled then
-
-		if humanoid.FloorMaterial
-			~= Enum.Material.Air
-		then
-
-			humanoid:ChangeState(
-				Enum.HumanoidStateType.Jumping
-			)
-
-		end
-
-	end
-
-	-- Noclip
-	if noclipEnabled then
-
-		for _, part in ipairs(
-			character:GetDescendants()
-		) do
-
-			if part:IsA("BasePart") then
-
-				part.CanCollide = false
-
-			end
-
-		end
-
-	end
-
+    if PlayerState.Noclip then
+        for _, part in ipairs(character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
+            end
+        end
+    end
 end)
 
 --========================================================--
--- OPEN / CLOSE
+-- INTERFACE CONTROLS & MOBILE SUPPORT
 --========================================================--
 
 local isOpen = true
-
 local function ToggleUI()
-
-	isOpen = not isOpen
-
-	MainFrame.Visible = isOpen
-
+    isOpen = not isOpen
+    MainFrame.Visible = isOpen
 end
 
 CloseButton.MouseButton1Click:Connect(function()
-
-	isOpen = false
-
-	MainFrame.Visible = false
-
+    isOpen = false
+    MainFrame.Visible = false
 end)
 
---========================================================--
--- DRAG MAIN WINDOW
--- PC + MOBILE
---========================================================--
-
+-- Dragging System (Desktop & Touch)
 local dragging = false
 local dragStart = nil
 local startPosition = nil
 
 TopBar.InputBegan:Connect(function(input)
-
-	if input.UserInputType ==
-		Enum.UserInputType.MouseButton1
-		or
-		input.UserInputType ==
-		Enum.UserInputType.Touch
-	then
-
-		dragging = true
-
-		dragStart = input.Position
-
-		startPosition =
-			MainFrame.Position
-
-	end
-
-end)
-
-TopBar.InputChanged:Connect(function(input)
-
-	if input.UserInputType ==
-		Enum.UserInputType.MouseMovement
-		or
-		input.UserInputType ==
-		Enum.UserInputType.Touch
-	then
-
-		-- The actual movement is handled
-		-- through UserInputService below.
-
-	end
-
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPosition = MainFrame.Position
+    end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-
-	if not dragging then
-		return
-	end
-
-	if input.UserInputType ==
-		Enum.UserInputType.MouseMovement
-		or
-		input.UserInputType ==
-		Enum.UserInputType.Touch
-	then
-
-		local delta =
-			input.Position - dragStart
-
-		MainFrame.Position =
-			UDim2.new(
-				startPosition.X.Scale,
-				startPosition.X.Offset + delta.X,
-
-				startPosition.Y.Scale,
-				startPosition.Y.Offset + delta.Y
-			)
-
-	end
-
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        MainFrame.Position = UDim2.new(
+            startPosition.X.Scale,
+            startPosition.X.Offset + delta.X,
+            startPosition.Y.Scale,
+            startPosition.Y.Offset + delta.Y
+        )
+    end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-
-	if input.UserInputType ==
-		Enum.UserInputType.MouseButton1
-		or
-		input.UserInputType ==
-		Enum.UserInputType.Touch
-	then
-
-		dragging = false
-
-	end
-
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
 end)
 
---========================================================--
--- MOBILE FLOATING BUTTON
---========================================================--
-
+-- Mobile Floating Icon
 local MobileButton = Instance.new("ImageButton")
-
 MobileButton.Name = "MobileToggle"
-
-MobileButton.Size =
-	UDim2.new(0, 50, 0, 50)
-
-MobileButton.Position =
-	UDim2.new(0, 20, 0.5, -25)
-
-MobileButton.BackgroundColor3 = BG
-
-MobileButton.Image =
-	"rbxassetid://6023426915"
-
-MobileButton.ImageColor3 = CYAN
-
+MobileButton.Size = UDim2.new(0, 46, 0, 46)
+MobileButton.Position = UDim2.new(0, 20, 0.5, -23)
+MobileButton.BackgroundColor3 = COLORS.BG
+MobileButton.Image = "rbxassetid://6023426915"
+MobileButton.ImageColor3 = COLORS.CYAN
 MobileButton.AutoButtonColor = false
-
 MobileButton.Parent = ScreenGui
 
 local MobileCorner = Instance.new("UICorner")
@@ -1303,13 +842,9 @@ MobileCorner.CornerRadius = UDim.new(1, 0)
 MobileCorner.Parent = MobileButton
 
 local MobileStroke = Instance.new("UIStroke")
-MobileStroke.Color = CYAN
+MobileStroke.Color = COLORS.CYAN
 MobileStroke.Thickness = 2
 MobileStroke.Parent = MobileButton
-
---========================================================--
--- MOBILE BUTTON DRAG + CLICK
---========================================================--
 
 local mobileDragging = false
 local mobileMoved = false
@@ -1317,102 +852,41 @@ local mobileDragStart = nil
 local mobileStartPos = nil
 
 MobileButton.InputBegan:Connect(function(input)
-
-	if input.UserInputType ==
-		Enum.UserInputType.MouseButton1
-		or
-		input.UserInputType ==
-		Enum.UserInputType.Touch
-	then
-
-		mobileDragging = true
-		mobileMoved = false
-
-		mobileDragStart =
-			input.Position
-
-		mobileStartPos =
-			MobileButton.Position
-
-	end
-
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        mobileDragging = true
+        mobileMoved = false
+        mobileDragStart = input.Position
+        mobileStartPos = MobileButton.Position
+    end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-
-	if not mobileDragging then
-		return
-	end
-
-	if input.UserInputType ==
-		Enum.UserInputType.MouseMovement
-		or
-		input.UserInputType ==
-		Enum.UserInputType.Touch
-	then
-
-		local delta =
-			input.Position -
-			mobileDragStart
-
-		if delta.Magnitude > 8 then
-			mobileMoved = true
-		end
-
-		MobileButton.Position =
-			UDim2.new(
-				mobileStartPos.X.Scale,
-				mobileStartPos.X.Offset + delta.X,
-
-				mobileStartPos.Y.Scale,
-				mobileStartPos.Y.Offset + delta.Y
-			)
-
-	end
-
+    if mobileDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - mobileDragStart
+        if delta.Magnitude > 8 then mobileMoved = true end
+        MobileButton.Position = UDim2.new(
+            mobileStartPos.X.Scale,
+            mobileStartPos.X.Offset + delta.X,
+            mobileStartPos.Y.Scale,
+            mobileStartPos.Y.Offset + delta.Y
+        )
+    end
 end)
 
 UserInputService.InputEnded:Connect(function(input)
-
-	if input.UserInputType ==
-		Enum.UserInputType.MouseButton1
-		or
-		input.UserInputType ==
-		Enum.UserInputType.Touch
-	then
-
-		if mobileDragging and not mobileMoved then
-			ToggleUI()
-		end
-
-		mobileDragging = false
-
-	end
-
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        if mobileDragging and not mobileMoved then
+            ToggleUI()
+        end
+        mobileDragging = false
+    end
 end)
 
---========================================================--
--- PC KEYBIND
---========================================================--
-
-local toggleKey = Enum.KeyCode.M
-
+-- PC Hotkey
 UserInputService.InputBegan:Connect(function(input, processed)
-
-	if processed then
-		return
-	end
-
-	if input.KeyCode == toggleKey then
-
-		ToggleUI()
-
-	end
-
+    if not processed and input.KeyCode == Enum.KeyCode.M then
+        ToggleUI()
+    end
 end)
 
---========================================================--
--- FINISHED
---========================================================--
-
-print("Ruishi Hub UI loaded successfully.")
+print("Ruishi Hub // Cyber Core loaded successfully.")
