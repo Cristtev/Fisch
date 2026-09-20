@@ -1,0 +1,956 @@
+
+-- RUISHI HUB || FISCH EDITION
+
+
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Cleanup Existing Instances
+if playerGui:FindFirstChild("RuishiFischGui") then
+	playerGui.RuishiFischGui:Destroy()
+end
+if playerGui:FindFirstChild("CyberpunkIntroGUI") then
+	playerGui.CyberpunkIntroGUI:Destroy()
+end
+
+-- ScreenGui Container
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "RuishiFischGui"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = playerGui
+
+
+-- LOCATIONS DATA
+
+local Islands = {
+	["Ancient Isle"]        = Vector3.new(6027, 198, 315),
+	["Atlantis"]            = Vector3.new(-4454, -605, 1829),
+	["Birch Cay"]           = Vector3.new(1680, 135, -2410),
+	["Castaway Cliff"]      = Vector3.new(392, 200, -1772),
+	["Cryogenic Canal"]     = Vector3.new(20280, 705, 5730),
+	["Desolate Deep"]       = Vector3.new(-1630, -215, -2815),
+	["Ethereal Abyss"]      = Vector3.new(-3991, -564, 1808),
+	["Forsaken Shores"]     = Vector3.new(-2485, 133, 1537),
+	["Frenzy of War"]       = Vector3.new(-8792, -2761, 826),
+	["Glacial Grotto"]      = Vector3.new(19870, 1155, 5490),
+	["Grand Riff"]          = Vector3.new(-3558, 151, 485),
+	["Keepers Sanctuary"]   = Vector3.new(-3150, 850, -2200),
+	["Lost Jungle"]         = Vector3.new(-2658, 148, -2039),
+	["Moosewood"]           = Vector3.new(472, 150, 239),
+	["Northern Expedition"] = Vector3.new(19645, 130, 5225),
+	["Poseidon Temple"]     = Vector3.new(-4037, -558, 912),
+	["Roslit Bay"]          = Vector3.new(-1468, 132, 691),
+	["Scoria Reach"]        = Vector3.new(-5186, 143, -1488),
+	["Snowcap Island"]      = Vector3.new(2645, 155, 2375),
+	["Sunken Depths"]       = Vector3.new(-4936, -595, 1819),
+	["Sunken Trial"]        = Vector3.new(-4782, -595, 1827),
+	["Sunstone Island"]     = Vector3.new(-973, 222, -1002),
+	["Terrapin Island"]     = Vector3.new(-225, 141, 1930),
+	["Tidefall"]            = Vector3.new(3182, -1099, 739),
+	["Volcanic Vents"]      = Vector3.new(-3489, -2258, 3809),
+	["Zeus Sanctuary"]      = Vector3.new(-4296, -627, 2663)
+}
+
+local NPCs = {
+	["Ancient Merchant"]    = Vector3.new(6050, 195, 280),
+	["Angler NPC"]          = Vector3.new(480, 152, 300),
+	["Appraiser (Moosewood)"] = Vector3.new(450, 150, 250),
+	["Bait Merchant"]       = Vector3.new(-1480, 135, 710),
+	["Castaway Innkeeper"]  = Vector3.new(410, 202, -1780),
+	["Desolate Merchant"]   = Vector3.new(-1650, -210, -2820),
+	["Forsaken Innkeeper"]  = Vector3.new(-2460, 135, 1560),
+	["Islander Merchant"]   = Vector3.new(-950, 225, -970),
+	["Lighthouse Keeper"]   = Vector3.new(510, 160, 180),
+	["Moosewood Innkeeper"] = Vector3.new(490, 150, 220),
+	["Roslit Innkeeper"]    = Vector3.new(-1440, 132, 680),
+	["Shipwright"]          = Vector3.new(530, 148, 260),
+	["Snowcap Merchant"]    = Vector3.new(2620, 158, 2380),
+	["Sunstone Merchant"]   = Vector3.new(-990, 220, -960),
+	["Terrapin Innkeeper"]  = Vector3.new(-200, 142, 1960)
+}
+
+local BaitItems = {
+	"Bait Crate",
+	"Quality Bait Crate",
+	"Coral Geode",
+	"Volcanic Geode"
+}
+
+
+-- CYBERPUNK INTRO LOADING SCREEN
+
+local IntroGui = Instance.new("ScreenGui")
+IntroGui.Name = "CyberpunkIntroGUI"
+IntroGui.ResetOnSpawn = false
+IntroGui.Parent = playerGui
+
+local IntroFrame = Instance.new("Frame")
+IntroFrame.Size = UDim2.new(0, 360, 0, 240)
+IntroFrame.Position = UDim2.new(0.5, -180, 0.5, -120)
+IntroFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+IntroFrame.BorderSizePixel = 0
+IntroFrame.Parent = IntroGui
+
+local IntroCorner = Instance.new("UICorner")
+IntroCorner.CornerRadius = UDim.new(0, 14)
+IntroCorner.Parent = IntroFrame
+
+local IntroStroke = Instance.new("UIStroke")
+IntroStroke.Color = Color3.fromRGB(0, 255, 204)
+IntroStroke.Thickness = 2
+IntroStroke.Parent = IntroFrame
+
+local IntroLogo = Instance.new("ImageLabel")
+IntroLogo.Size = UDim2.new(0, 50, 0, 50)
+IntroLogo.Position = UDim2.new(0.5, -25, 0, 25)
+IntroLogo.BackgroundTransparency = 1
+IntroLogo.Image = "rbxassetid://79757823848884"
+IntroLogo.ImageColor3 = Color3.fromRGB(0, 255, 204)
+IntroLogo.Parent = IntroFrame
+
+local IntroTitle = Instance.new("TextLabel")
+IntroTitle.Size = UDim2.new(1, 0, 0, 30)
+IntroTitle.Position = UDim2.new(0, 0, 0, 85)
+IntroTitle.BackgroundTransparency = 1
+IntroTitle.Font = Enum.Font.GothamBold
+IntroTitle.Text = "RUISHI HUB | LOADING..."
+IntroTitle.TextColor3 = Color3.fromRGB(0, 255, 204)
+IntroTitle.TextSize = 14
+IntroTitle.Parent = IntroFrame
+
+local BarBg = Instance.new("Frame")
+BarBg.Size = UDim2.new(0, 300, 0, 8)
+BarBg.Position = UDim2.new(0.5, -150, 0, 140)
+BarBg.BackgroundColor3 = Color3.fromRGB(30, 30, 45)
+BarBg.BorderSizePixel = 0
+BarBg.Parent = IntroFrame
+
+local BarBgCorner = Instance.new("UICorner")
+BarBgCorner.CornerRadius = UDim.new(1, 0)
+BarBgCorner.Parent = BarBg
+
+local BarFill = Instance.new("Frame")
+BarFill.Size = UDim2.new(0, 0, 1, 0)
+BarFill.BackgroundColor3 = Color3.fromRGB(0, 255, 204)
+BarFill.BorderSizePixel = 0
+BarFill.Parent = BarBg
+
+local BarFillCorner = Instance.new("UICorner")
+BarFillCorner.CornerRadius = UDim.new(1, 0)
+BarFillCorner.Parent = BarFill
+
+local StatusText = Instance.new("TextLabel")
+StatusText.Size = UDim2.new(1, 0, 0, 20)
+StatusText.Position = UDim2.new(0, 0, 0, 165)
+StatusText.BackgroundTransparency = 1
+StatusText.Font = Enum.Font.GothamMedium
+StatusText.Text = "Initializing modules..."
+StatusText.TextColor3 = Color3.fromRGB(180, 180, 200)
+StatusText.TextSize = 12
+StatusText.Parent = IntroFrame
+
+
+
+-- MAIN FRAME (DRAGGABLE & STYLISH)
+
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 320, 0, 530)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -265)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.ClipsDescendants = true
+MainFrame.BackgroundTransparency = 1 
+MainFrame.Visible = false
+MainFrame.Parent = ScreenGui
+
+local MainCorner = Instance.new("UICorner")
+MainCorner.CornerRadius = UDim.new(0, 12)
+MainCorner.Parent = MainFrame
+
+local MainStroke = Instance.new("UIStroke")
+MainStroke.Color = Color3.fromRGB(0, 255, 204)
+MainStroke.Thickness = 2
+MainStroke.Transparency = 1
+MainStroke.Parent = MainFrame
+
+-- Top Bar (Header)
+local TopBar = Instance.new("Frame")
+TopBar.Name = "TopBar"
+TopBar.Size = UDim2.new(1, 0, 0, 40)
+TopBar.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+TopBar.BackgroundTransparency = 1
+TopBar.BorderSizePixel = 0
+TopBar.Parent = MainFrame
+
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Size = UDim2.new(1, -50, 1, 0)
+TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Font = Enum.Font.GothamBold
+TitleLabel.Text = "Ruishi Hub | Evade Beta"
+TitleLabel.TextColor3 = Color3.fromRGB(0, 255, 204)
+TitleLabel.TextTransparency = 1
+TitleLabel.TextSize = 13
+TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+TitleLabel.Parent = TopBar
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 28, 0, 28)
+CloseButton.Position = UDim2.new(1, -34, 0, 6)
+CloseButton.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+CloseButton.BackgroundTransparency = 1
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Text = "X"
+CloseButton.TextColor3 = Color3.fromRGB(255, 80, 80)
+CloseButton.TextTransparency = 1
+CloseButton.TextSize = 13
+CloseButton.AutoButtonColor = false
+CloseButton.Parent = TopBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 6)
+CloseCorner.Parent = CloseButton
+
+-- Content Container
+local ContentPanel = Instance.new("Frame")
+ContentPanel.Name = "ContentPanel"
+ContentPanel.Size = UDim2.new(1, -154, 1, -48)
+ContentPanel.Position = UDim2.new(0, 144, 0, 44)
+ContentPanel.BackgroundColor3 = Color3.fromRGB(12, 16, 24)
+ContentPanel.BorderSizePixel = 0
+ContentPanel.Parent = MainFrame
+
+local ContentCorner = Instance.new("UICorner")
+ContentCorner.CornerRadius = UDim.new(0, 8)
+ContentCorner.Parent = ContentPanel
+
+local Categories = {}
+local TabButtons = {}
+
+local function createTab(name)
+	local scroll = Instance.new("ScrollingFrame")
+	scroll.Name = name .. "Tab"
+	scroll.Size = UDim2.new(1, -16, 1, -16)
+	scroll.Position = UDim2.new(0, 8, 0, 8)
+	scroll.BackgroundTransparency = 1
+	scroll.BorderSizePixel = 0
+	scroll.ScrollBarThickness = 3
+	scroll.ScrollBarImageColor3 = Color3.fromRGB(0, 200, 255)
+	scroll.Visible = false
+	scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+	scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	scroll.Parent = ContentPanel
+
+	local layout = Instance.new("UIListLayout")
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Padding = UDim.new(0, 8)
+	layout.Parent = scroll
+
+	local header = Instance.new("TextLabel")
+	header.Size = UDim2.new(1, 0, 0, 22)
+	header.BackgroundTransparency = 1
+	header.Font = Enum.Font.GothamBold
+	header.Text = name:upper()
+	header.TextColor3 = Color3.fromRGB(0, 230, 255)
+	header.TextSize = 13
+	header.TextXAlignment = Enum.TextXAlignment.Left
+	header.Parent = scroll
+
+	Categories[name] = scroll
+	return scroll
+end
+
+local function selectTab(name)
+	for tabName, frame in pairs(Categories) do
+		frame.Visible = (tabName == name)
+	end
+	for btnName, btn in pairs(TabButtons) do
+		local pointer = btn:FindFirstChild("Pointer")
+		local stroke = btn:FindFirstChildOfClass("UIStroke")
+		if btnName == name then
+			btn.BackgroundColor3 = Color3.fromRGB(0, 150, 200)
+			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			if pointer then pointer.Visible = true end
+			if stroke then stroke.Enabled = true end
+		else
+			btn.BackgroundColor3 = Color3.fromRGB(24, 30, 44)
+			btn.TextColor3 = Color3.fromRGB(160, 175, 200)
+			if pointer then pointer.Visible = false end
+			if stroke then stroke.Enabled = false end
+		end
+	end
+end
+
+local function createTabButton(name, order)
+	local btn = Instance.new("TextButton")
+	btn.Name = name .. "TabBtn"
+	btn.LayoutOrder = order
+	btn.Size = UDim2.new(0, 114, 0, 32)
+	btn.BackgroundColor3 = Color3.fromRGB(24, 30, 44)
+	btn.BorderSizePixel = 0
+	btn.Font = Enum.Font.GothamBold
+	btn.Text = name:upper()
+	btn.TextColor3 = Color3.fromRGB(160, 175, 200)
+	btn.TextSize = 11
+	btn.AutoButtonColor = false
+	btn.Parent = Sidebar
+
+	local btnCorner = Instance.new("UICorner")
+	btnCorner.CornerRadius = UDim.new(0, 6)
+	btnCorner.Parent = btn
+
+	local btnStroke = Instance.new("UIStroke")
+	btnStroke.Color = Color3.fromRGB(0, 180, 216)
+	btnStroke.Thickness = 1
+	btnStroke.Enabled = false
+	btnStroke.Parent = btn
+
+	-- Pointer Arrow (Pointer Channel Indicator)
+	local pointer = Instance.new("Frame")
+	pointer.Name = "Pointer"
+	pointer.Size = UDim2.new(0, 10, 0, 10)
+	pointer.Position = UDim2.new(1, -5, 0.5, -5)
+	pointer.Rotation = 45
+	pointer.BackgroundColor3 = Color3.fromRGB(0, 180, 216)
+	pointer.BorderSizePixel = 0
+	pointer.Visible = false
+	pointer.Parent = btn
+
+	TabButtons[name] = btn
+	btn.MouseButton1Click:Connect(function() selectTab(name) end)
+	return btn
+end
+
+-- Initialize Categories
+local AboutTab = createTab("About")
+local PlayerTab = createTab("Player")
+local IslandsTab = createTab("Islands TP")
+local NpcsTab = createTab("NPCs TP")
+local SettingsTab = createTab("Settings")
+
+createTabButton("About", 1)
+createTabButton("Player", 2)
+createTabButton("Islands TP", 3)
+createTabButton("NPCs TP", 4)
+createTabButton("Settings", 5)
+
+-- Select Default Active Tab
+selectTab("About")
+
+
+-- CUSTOM WATER SLIDER COMPONENT (WITH BUBBLE KNOB)
+
+local function createWaterSlider(parent, name, min, default, max, callback)
+	local container = Instance.new("Frame")
+	container.Size = UDim2.new(1, 0, 0, 48)
+	container.BackgroundColor3 = Color3.fromRGB(22, 28, 42)
+	container.BorderSizePixel = 0
+	container.Parent = parent
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = container
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(0, 70, 0, 20)
+	label.Position = UDim2.new(0, 8, 0, 14)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamBold
+	label.Text = name:upper()
+	label.TextColor3 = Color3.fromRGB(0, 230, 255)
+	label.TextSize = 11
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = container
+
+	-- Track Frame (Water Container Channel)
+	local track = Instance.new("Frame")
+	track.Name = "Track"
+	track.Size = UDim2.new(1, -135, 0, 22)
+	track.Position = UDim2.new(0, 75, 0, 13)
+	track.BackgroundColor3 = Color3.fromRGB(10, 14, 22)
+	track.Parent = container
+
+	local trackCorner = Instance.new("UICorner")
+	trackCorner.CornerRadius = UDim.new(1, 0)
+	trackCorner.Parent = track
+
+	local trackStroke = Instance.new("UIStroke")
+	trackStroke.Color = Color3.fromRGB(0, 180, 216)
+	trackStroke.Thickness = 1.5
+	trackStroke.Parent = track
+
+	-- Water Fill Bar (Liquid Fill)
+	local fill = Instance.new("Frame")
+	fill.Name = "Fill"
+	fill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+	fill.BackgroundColor3 = Color3.fromRGB(0, 190, 245)
+	fill.Parent = track
+
+	local fillCorner = Instance.new("UICorner")
+	fillCorner.CornerRadius = UDim.new(1, 0)
+	fillCorner.Parent = fill
+
+	local fillGradient = Instance.new("UIGradient")
+	fillGradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 120, 215)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 230, 255))
+	})
+	fillGradient.Parent = fill
+
+	-- Bubble Thumb Indicator
+	local bubble = Instance.new("Frame")
+	bubble.Name = "Bubble"
+	bubble.Size = UDim2.new(0, 24, 0, 24)
+	bubble.AnchorPoint = Vector2.new(0.5, 0.5)
+	bubble.Position = UDim2.new(fill.Size.X.Scale, 0, 0.5, 0)
+	bubble.BackgroundColor3 = Color3.fromRGB(220, 245, 255)
+	bubble.Parent = track
+
+	local bubbleCorner = Instance.new("UICorner")
+	bubbleCorner.CornerRadius = UDim.new(1, 0)
+	bubbleCorner.Parent = bubble
+
+	local bubbleStroke = Instance.new("UIStroke")
+	bubbleStroke.Color = Color3.fromRGB(0, 200, 255)
+	bubbleStroke.Thickness = 2
+	bubbleStroke.Parent = bubble
+
+	-- Readout Value Display Box
+	local valueBox = Instance.new("TextBox")
+	valueBox.Size = UDim2.new(0, 48, 0, 24)
+	valueBox.Position = UDim2.new(1, -52, 0, 12)
+	valueBox.BackgroundColor3 = Color3.fromRGB(28, 34, 50)
+	valueBox.Font = Enum.Font.GothamBold
+	valueBox.Text = tostring(default)
+	valueBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+	valueBox.TextSize = 11
+	valueBox.Parent = container
+
+	local boxCorner = Instance.new("UICorner")
+	boxCorner.CornerRadius = UDim.new(0, 6)
+	boxCorner.Parent = valueBox
+
+	local dragging = false
+	local function updateValue(input)
+		local scale = math.clamp((input.Position.X - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
+		local calculatedValue = math.floor(min + (max - min) * scale)
+
+		fill.Size = UDim2.new(scale, 0, 1, 0)
+		bubble.Position = UDim2.new(scale, 0, 0.5, 0)
+		valueBox.Text = tostring(calculatedValue)
+
+		if callback then
+			callback(calculatedValue)
+		end
+	end
+
+	track.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			updateValue(input)
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			updateValue(input)
+		end
+	end)
+
+	UserInputService.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = false
+		end
+	end)
+end
+
+
+-- OTHER COMPONENT HELPERS
+
+local function createToggle(parent, name, callback)
+	local container = Instance.new("Frame")
+	container.Size = UDim2.new(1, 0, 0, 38)
+	container.BackgroundColor3 = Color3.fromRGB(22, 28, 42)
+	container.BorderSizePixel = 0
+	container.Parent = parent
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = container
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.new(1, -50, 1, 0)
+	label.Position = UDim2.new(0, 10, 0, 0)
+	label.BackgroundTransparency = 1
+	label.Font = Enum.Font.GothamMedium
+	label.Text = name
+	label.TextColor3 = Color3.fromRGB(210, 220, 240)
+	label.TextSize = 12
+	label.TextXAlignment = Enum.TextXAlignment.Left
+	label.Parent = container
+
+	local toggleBtn = Instance.new("TextButton")
+	toggleBtn.Size = UDim2.new(0, 36, 0, 18)
+	toggleBtn.Position = UDim2.new(1, -44, 0.5, -9)
+	toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 48, 68)
+	toggleBtn.Text = ""
+	toggleBtn.AutoButtonColor = false
+	toggleBtn.Parent = container
+
+	local btnCorner = Instance.new("UICorner")
+	btnCorner.CornerRadius = UDim.new(1, 0)
+	btnCorner.Parent = toggleBtn
+
+	local circle = Instance.new("Frame")
+	circle.Size = UDim2.new(0, 14, 0, 14)
+	circle.Position = UDim2.new(0, 2, 0.5, -7)
+	circle.BackgroundColor3 = Color3.fromRGB(180, 195, 215)
+	circle.BorderSizePixel = 0
+	circle.Parent = toggleBtn
+
+	local circleCorner = Instance.new("UICorner")
+	circleCorner.CornerRadius = UDim.new(1, 0)
+	circleCorner.Parent = circle
+
+	local toggled = false
+	local function updateState(state)
+		toggled = state
+		if toggled then
+			circle:TweenPosition(UDim2.new(1, -16, 0.5, -7), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+			toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+			circle.BackgroundColor3 = Color3.fromRGB(12, 16, 24)
+		else
+			circle:TweenPosition(UDim2.new(0, 2, 0.5, -7), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.15, true)
+			toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 48, 68)
+			circle.BackgroundColor3 = Color3.fromRGB(180, 195, 215)
+		end
+		callback(toggled)
+	end
+
+	toggleBtn.MouseButton1Click:Connect(function()
+		updateState(not toggled)
+	end)
+
+	return { Set = updateState }
+end
+
+local function createDropdown(parent, placeholder, options, callback)
+	local container = Instance.new("Frame")
+	container.Size = UDim2.new(1, 0, 0, 36)
+	container.BackgroundColor3 = Color3.fromRGB(22, 28, 42)
+	container.BorderSizePixel = 0
+	container.ZIndex = 5
+	container.Parent = parent
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 6)
+	corner.Parent = container
+
+	local dropBtn = Instance.new("TextButton")
+	dropBtn.Size = UDim2.new(1, 0, 1, 0)
+	dropBtn.BackgroundTransparency = 1
+	dropBtn.Font = Enum.Font.GothamMedium
+	dropBtn.Text = "  " .. placeholder
+	dropBtn.TextColor3 = Color3.fromRGB(0, 230, 255)
+	dropBtn.TextSize = 12
+	dropBtn.TextXAlignment = Enum.TextXAlignment.Left
+	dropBtn.ZIndex = 6
+	dropBtn.Parent = container
+
+	local dropList = Instance.new("ScrollingFrame")
+	dropList.Size = UDim2.new(1, 0, 0, 120)
+	dropList.Position = UDim2.new(0, 0, 1, 4)
+	dropList.BackgroundColor3 = Color3.fromRGB(28, 36, 54)
+	dropList.BorderSizePixel = 0
+	dropList.ScrollBarThickness = 3
+	dropList.ScrollBarImageColor3 = Color3.fromRGB(0, 200, 255)
+	dropList.Visible = false
+	dropList.ZIndex = 10
+	dropList.CanvasSize = UDim2.new(0, 0, 0, 0)
+	dropList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	dropList.Parent = container
+
+	local listLayout = Instance.new("UIListLayout")
+	listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	listLayout.Parent = dropList
+
+	for _, optName in ipairs(options) do
+		local opt = Instance.new("TextButton")
+		opt.Size = UDim2.new(1, 0, 0, 26)
+		opt.BackgroundTransparency = 1
+		opt.Font = Enum.Font.GothamMedium
+		opt.Text = "  " .. optName
+		opt.TextColor3 = Color3.fromRGB(200, 215, 235)
+		opt.TextSize = 11
+		opt.TextXAlignment = Enum.TextXAlignment.Left
+		opt.ZIndex = 11
+		opt.Parent = dropList
+
+		opt.MouseButton1Click:Connect(function()
+			dropBtn.Text = "  " .. optName
+			dropList.Visible = false
+			callback(optName)
+		end)
+	end
+
+	dropBtn.MouseButton1Click:Connect(function()
+		dropList.Visible = not dropList.Visible
+	end)
+end
+
+
+-- CATEGORY CONTENT POPULATION
+
+
+-- 1. ABOUT TAB
+local AboutBox = Instance.new("Frame")
+AboutBox.Size = UDim2.new(1, 0, 0, 150)
+AboutBox.BackgroundColor3 = Color3.fromRGB(22, 28, 42)
+AboutBox.Parent = AboutTab
+
+local AboutBoxCorner = Instance.new("UICorner")
+AboutBoxCorner.CornerRadius = UDim.new(0, 8)
+AboutBoxCorner.Parent = AboutBox
+
+local AboutBoxStroke = Instance.new("UIStroke")
+AboutBoxStroke.Color = Color3.fromRGB(0, 180, 216)
+AboutBoxStroke.Thickness = 1
+AboutBoxStroke.Parent = AboutBox
+
+local AboutText = Instance.new("TextLabel")
+AboutText.Size = UDim2.new(1, -20, 1, -20)
+AboutText.Position = UDim2.new(0, 10, 0, 10)
+AboutText.BackgroundTransparency = 1
+AboutText.Font = Enum.Font.GothamMedium
+AboutText.Text = "DISCLAIMER: Use this script at your own risk. The developers are not responsible for any account bans, strikes, or penalties incurred. It is strongly recommended to test all features on an alternate or smurf account before using it on your primary account."
+AboutText.TextColor3 = Color3.fromRGB(210, 220, 240)
+AboutText.TextSize = 12
+AboutText.TextWrapped = true
+AboutText.TextYAlignment = Enum.TextYAlignment.Top
+AboutText.Parent = AboutBox
+
+-- 2. PLAYER TAB (Using Custom Water Slider with Bubble Handle)
+createWaterSlider(PlayerTab, "SPEED", 16, 100, 500, function(val)
+	if player.Character and player.Character:FindFirstChildOfClass("Humanoid") then
+		player.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = val
+	end
+end)
+
+-- 3. ISLANDS TP TAB
+local islandNames = {}
+for name, _ in pairs(Islands) do table.insert(islandNames, name) end
+table.sort(islandNames)
+
+createDropdown(IslandsTab, "Select Island Location", islandNames, function(selected)
+	local targetPos = Islands[selected]
+	if targetPos and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+	end
+end)
+
+-- 4. NPCS TP TAB
+local npcNames = {}
+for name, _ in pairs(NPCs) do table.insert(npcNames, name) end
+table.sort(npcNames)
+
+createDropdown(NpcsTab, "Select NPC Location", npcNames, function(selected)
+	local targetPos = NPCs[selected]
+	if targetPos and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+		player.Character.HumanoidRootPart.CFrame = CFrame.new(targetPos)
+	end
+end)
+
+-- 5. SETTINGS TAB
+createToggle(SettingsTab, "Toggle UI Visibility", function(state)
+	MainFrame.Visible = state
+end)
+
+-- 5. AUTO BUY TAB (ITEM SELECTION + TYPED QUANTITY + BUY BUTTON)
+local selectedBaitItem = "Bait Crate"
+local typedAmount = 1
+
+createDropdown(AutoBuyTab, "Select Item...", BaitItems, function(selected)
+	selectedBaitItem = selected
+end)
+
+local QtyBoxContainer = Instance.new("Frame")
+QtyBoxContainer.Size = UDim2.new(1, 0, 0, 36)
+QtyBoxContainer.BackgroundColor3 = Color3.fromRGB(22, 22, 35)
+QtyBoxContainer.BackgroundTransparency = 1
+QtyBoxContainer.BorderSizePixel = 0
+QtyBoxContainer.Parent = AutoBuyTab
+
+local QtyBoxCorner = Instance.new("UICorner")
+QtyBoxCorner.CornerRadius = UDim.new(0, 6)
+QtyBoxCorner.Parent = QtyBoxContainer
+
+local QtyTextBox = Instance.new("TextBox")
+QtyTextBox.Size = UDim2.new(1, 0, 1, 0)
+QtyTextBox.BackgroundTransparency = 1
+QtyTextBox.Font = Enum.Font.GothamMedium
+QtyTextBox.PlaceholderText = "Enter Quantity (e.g. 5)"
+QtyTextBox.Text = "1"
+QtyTextBox.TextColor3 = Color3.fromRGB(0, 255, 204)
+QtyTextBox.TextTransparency = 1
+QtyTextBox.TextSize = 12
+QtyTextBox.TextXAlignment = Enum.TextXAlignment.Left
+QtyTextBox.Parent = QtyBoxContainer
+
+local QtyPad = Instance.new("UIPadding")
+QtyPad.PaddingLeft = UDim.new(0, 10)
+QtyPad.Parent = QtyTextBox
+
+QtyTextBox.FocusLost:Connect(function()
+	local num = tonumber(QtyTextBox.Text)
+	if num and num > 0 then
+		typedAmount = math.floor(num)
+	else
+		QtyTextBox.Text = "1"
+		typedAmount = 1
+	end
+end)
+
+local BuyItemBtn = Instance.new("TextButton")
+BuyItemBtn.Size = UDim2.new(1, 0, 0, 36)
+BuyItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 204)
+BuyItemBtn.BackgroundTransparency = 1
+BuyItemBtn.Font = Enum.Font.GothamBold
+BuyItemBtn.Text = "BUY BAIT OR CRATE"
+BuyItemBtn.TextColor3 = Color3.fromRGB(15, 15, 25)
+BuyItemBtn.TextTransparency = 1
+BuyItemBtn.TextSize = 12
+BuyItemBtn.AutoButtonColor = false
+BuyItemBtn.Parent = AutoBuyTab
+
+local BuyItemCorner = Instance.new("UICorner")
+BuyItemCorner.CornerRadius = UDim.new(0, 6)
+BuyItemCorner.Parent = BuyItemBtn
+
+BuyItemBtn.MouseButton1Click:Connect(function()
+	task.spawn(function()
+		BuyItemBtn.Text = "PURCHASING..."
+		for i = 1, typedAmount do
+			pcall(function()
+				if ReplicatedStorage:FindFirstChild("events") and ReplicatedStorage.events:FindFirstChild("purchase") then
+					ReplicatedStorage.events.purchase:FireServer(selectedBaitItem)
+				elseif ReplicatedStorage:FindFirstChild("packages") and ReplicatedStorage.packages:FindFirstChild("Net") then
+					ReplicatedStorage.packages.Net["RE/PurchaseBaitCrate"]:FireServer(selectedBaitItem)
+				end
+			end)
+			task.wait(0.05)
+		end
+		BuyItemBtn.Text = "PURCHASE COMPLETE"
+		task.wait(1)
+		BuyItemBtn.Text = "BUY BAIT OR CRATE"
+	end)
+end)
+
+-- 6. SETTINGS TAB (REJOIN & SERVER HOP)
+local RejoinBtn = Instance.new("TextButton")
+RejoinBtn.Size = UDim2.new(1, 0, 0, 36)
+RejoinBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 48)
+RejoinBtn.BackgroundTransparency = 1
+RejoinBtn.Font = Enum.Font.GothamBold
+RejoinBtn.Text = "REJOIN SERVER"
+RejoinBtn.TextColor3 = Color3.fromRGB(0, 255, 204)
+RejoinBtn.TextTransparency = 1
+RejoinBtn.TextSize = 12
+RejoinBtn.AutoButtonColor = false
+RejoinBtn.Parent = SettingsTab
+
+local RejoinCorner = Instance.new("UICorner")
+RejoinCorner.CornerRadius = UDim.new(0, 6)
+RejoinCorner.Parent = RejoinBtn
+
+RejoinBtn.MouseButton1Click:Connect(function()
+	TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+end)
+
+local ServerHopBtn = Instance.new("TextButton")
+ServerHopBtn.Size = UDim2.new(1, 0, 0, 36)
+ServerHopBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 48)
+ServerHopBtn.BackgroundTransparency = 1
+ServerHopBtn.Font = Enum.Font.GothamBold
+ServerHopBtn.Text = "SERVER HOP"
+ServerHopBtn.TextColor3 = Color3.fromRGB(0, 255, 204)
+ServerHopBtn.TextTransparency = 1
+ServerHopBtn.TextSize = 12
+ServerHopBtn.AutoButtonColor = false
+ServerHopBtn.Parent = SettingsTab
+
+local ServerHopCorner = Instance.new("UICorner")
+ServerHopCorner.CornerRadius = UDim.new(0, 6)
+ServerHopCorner.Parent = ServerHopBtn
+
+ServerHopBtn.MouseButton1Click:Connect(function()
+	pcall(function()
+		local HttpService = game:GetService("HttpService")
+		local servers = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+		for _, s in ipairs(servers.data) do
+			if s.id ~= game.JobId and s.playing < s.maxPlayers then
+				TeleportService:TeleportToPlaceInstance(game.PlaceId, s.id, player)
+				break
+			end
+		end
+	end)
+end)
+
+selectTab("About")
+
+
+-- MOBILE TOGGLE BUTTON
+
+local MobileButton = Instance.new("ImageButton")
+MobileButton.Name = "MobileToggle"
+MobileButton.Size = UDim2.new(0, 48, 0, 48)
+MobileButton.Position = UDim2.new(0, 20, 0.5, -24)
+MobileButton.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+MobileButton.BackgroundTransparency = 1
+MobileButton.Image = "rbxassetid://79757823848884"
+MobileButton.ImageColor3 = Color3.fromRGB(0, 255, 204)
+MobileButton.ImageTransparency = 1
+MobileButton.Visible = false
+MobileButton.Parent = ScreenGui
+
+local MobCorner = Instance.new("UICorner")
+MobCorner.CornerRadius = UDim.new(1, 0)
+MobCorner.Parent = MobileButton
+
+local MobStroke = Instance.new("UIStroke")
+MobStroke.Color = Color3.fromRGB(0, 255, 204)
+MobStroke.Thickness = 2
+MobStroke.Transparency = 1
+MobStroke.Parent = MobileButton
+
+
+
+-- RUNSERVICE & DRAGGABLE LOGIC
+
+UserInputService.JumpRequest:Connect(function()
+	if _G.InfJump and player.Character and player.Character:FindFirstChild("Humanoid") then
+		player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	local char = player.Character
+	if not char then return end
+	local hum = char:FindFirstChild("Humanoid")
+	if hum then
+		if hum.WalkSpeed ~= currentSpeed then hum.WalkSpeed = currentSpeed end
+		if hum.JumpPower ~= currentJump then
+			hum.UseJumpPower = true
+			hum.JumpPower = currentJump
+		end
+	end
+	if _G.Noclip then
+		for _, part in ipairs(char:GetDescendants()) do
+			if part:IsA("BasePart") and part.CanCollide then
+				part.CanCollide = false
+			end
+		end
+	end
+end)
+
+-- DRAGGABLE WINDOW SYSTEM & MOBILE IMAGE BUTTON
+
+local dragging, dragInput, dragStart, startPos
+
+TopBar.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = MainFrame.Position
+	end
+end)
+
+TopBar.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = false
+	end
+end)
+
+-- Mobile Button Draggable
+local mDragging, mDragStart, mStartPos
+MobileButton.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		mDragging = true
+		mDragStart = input.Position
+		mStartPos = MobileButton.Position
+	end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+	if mDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+		local delta = input.Position - mDragStart
+		MobileButton.Position = UDim2.new(mStartPos.X.Scale, mStartPos.X.Offset + delta.X, mStartPos.Y.Scale, mStartPos.Y.Offset + delta.Y)
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		mDragging = false
+	end
+end)
+
+-- Mobile Floating Image Button (Using a reliable built-in UI icon)
+local MobileButton = Instance.new("ImageButton")
+MobileButton.Name = "MobileToggle"
+MobileButton.Size = UDim2.new(0, 50, 0, 50)
+MobileButton.Position = UDim2.new(0, 20, 0.5, -25)
+MobileButton.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+MobileButton.Image = "rbxassetid://6023426915"
+MobileButton.ImageColor3 = Color3.fromRGB(0, 255, 204)
+MobileButton.AutoButtonColor = false
+MobileButton.Parent = ScreenGui
+
+local MobCorner = Instance.new("UICorner")
+MobCorner.CornerRadius = UDim.new(1, 0)
+MobCorner.Parent = MobileButton
+
+local MobStroke = Instance.new("UIStroke")
+MobStroke.Color = Color3.fromRGB(0, 255, 204)
+MobStroke.Thickness = 2
+MobStroke.Parent = MobileButton
+
+local function toggleUI()
+	isOpen = not isOpen
+	MainFrame.Visible = isOpen
+end
+
+MobileButton.MouseButton1Click:Connect(toggleUI)
+
+-- Variable to store the customizable PC toggle key (Change Enum.KeyCode.M to any key you prefer)
+local toggleKey = Enum.KeyCode.M
+
+-- PC Keybind: Dynamic Key recognition
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	
+	if input.KeyCode == toggleKey then
+		toggleUI()
+	end
+end)
